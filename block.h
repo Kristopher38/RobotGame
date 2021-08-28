@@ -2,7 +2,7 @@
 #define BLOCK_H
 
 #include <memory>
-#include "olcPixelGameEngine.h"
+#include "pge/olcPixelGameEngine.h"
 
 class Block
 {

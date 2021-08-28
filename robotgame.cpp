@@ -1,13 +1,18 @@
+#define OLC_PGEX_DEAR_IMGUI_IMPLEMENTATION
 #define OLC_PGE_APPLICATION
+
 #include "robotgame.h"
 
-RobotGame::RobotGame()
+RobotGame::RobotGame() : pge_imgui(true)
 {
     sAppName = "Robot game";
 }
 
 bool RobotGame::OnUserCreate()
 {
+    this->gameLayer = this->CreateLayer();
+    this->EnableLayer(this->gameLayer, true);
+
     sprites.push_back(std::make_shared<olc::Sprite>("assets/default_block.png"));
     sprites.push_back(std::make_shared<olc::Sprite>("assets/default_big_block.png"));
     for (int i = 0; i < 5; ++i)
@@ -69,6 +74,7 @@ void RobotGame::DrawBlock(Block* block)
 
 bool RobotGame::OnUserUpdate(float fElapsedTime)
 {
+    this->SetDrawTarget(this->gameLayer);
     this->Clear(olc::BLACK);
     this->DrawGrid(10);
 
@@ -104,5 +110,13 @@ bool RobotGame::OnUserUpdate(float fElapsedTime)
 
     for (auto block = blocks.begin(); block != blocks.end(); ++block)
         this->DrawBlock(&(*block));
+
+    ImGui::ShowDemoWindow();
+
     return true;
+}
+
+void RobotGame::DrawUI(void)
+{
+    pge_imgui.ImGui_ImplPGE_Render();
 }
