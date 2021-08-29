@@ -2,12 +2,17 @@
 #define GAME_H
 
 #include <vector>
+#include <string>
+#include <memory>
 #include "pge/olcPixelGameEngine.h"
 #include "pge/imgui_impl_pge.h"
+#include "pge/imgui_stdlib.h"
 #include "lua/lua.hpp"
 #include "block.h"
+#include "programmableblock.h"
+#include "uistate.h"
 
-enum class STATE {IDLE, DRAGGING};
+class IState;
 
 class RobotGame : public olc::PixelGameEngine
 {
@@ -17,22 +22,25 @@ private:
 
     std::vector<std::shared_ptr<olc::Sprite>> sprites;
     std::vector<Block> blocks;
-    STATE state = STATE::IDLE;
-    const int blocksize = 10;
-    olc::vi2d gridSize = {20, 10};
 
-    Block* dragging;
+    const int blocksize = 16;
+    olc::vi2d gridSize = {16, 9};
+    std::string codebuf;
 public:
+    std::unique_ptr<IState> state;
+
     RobotGame();
     bool OnUserCreate() override;
     bool OnUserUpdate(float fElapsedTime) override;
 
-    void DrawGrid(int blocksize);
+    void DrawGrid();
     Block* GetBlockAt(olc::vi2d pos);
     olc::vi2d GetGridAt(olc::vi2d pos);
     void DrawBlock(Block* block);
     bool CanBePlaced(Block* block, olc::vi2d pos);
     void DrawUI(void);
+    void HandleInput();
+    void UpdateState();
 };
 
 #endif // GAME_H

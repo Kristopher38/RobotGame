@@ -10,10 +10,19 @@ if (UNIX)
 	set(CMAKE_CXX_FLAGS "-lX11 -lGL -lpthread -lpng -lstdc++fs -llua53")
 endif (UNIX)
 
-add_executable(${PROJECT_NAME} "main.cpp" "robotgame.cpp" "block.cpp" "programmableblock.cpp" "pge/imgui.cpp"
+add_executable(${PROJECT_NAME}
+	"main.cpp"
+	"robotgame.cpp"
+	"uistate.cpp"
+	"block.cpp"
+	"programmableblock.cpp"
+	"pge/imgui.cpp"
 	"pge/imgui_demo.cpp"
 	"pge/imgui_draw.cpp"
-	"pge/imgui_widgets.cpp" "pge/imgui_tables.cpp" "pge/imgui_impl_opengl2.cpp")
+	"pge/imgui_widgets.cpp"
+	"pge/imgui_tables.cpp"
+	"pge/imgui_impl_opengl2.cpp"
+	"pge/imgui_stdlib.cpp")
 
 if (WIN32)
 	target_link_libraries(${PROJECT_NAME} user32.lib)

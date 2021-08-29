@@ -6,7 +6,7 @@ using namespace std;
 int main()
 {
     RobotGame demo;
-    if (demo.Construct(240, 120, 8, 8, false, true))
+    if (demo.Construct(256, 144, 4, 4, false, true))
         demo.Start();
     return 0;
 }

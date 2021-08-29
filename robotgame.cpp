@@ -5,7 +5,8 @@
 
 RobotGame::RobotGame() : pge_imgui(true)
 {
-    sAppName = "Robot game";
+    this->sAppName = "Robot game";
+    this->state = std::make_unique<UIState::EditIdleState>();
 }
 
 bool RobotGame::OnUserCreate()
@@ -15,14 +16,16 @@ bool RobotGame::OnUserCreate()
 
     sprites.push_back(std::make_shared<olc::Sprite>("assets/default_block.png"));
     sprites.push_back(std::make_shared<olc::Sprite>("assets/default_big_block.png"));
+    sprites.push_back(std::make_shared<olc::Sprite>("assets/code_block.png"));
     for (int i = 0; i < 5; ++i)
         for (int j = 0; j < 5; ++j)
-            blocks.push_back(Block(i, j, 1, 1, sprites[0]));
-    blocks.push_back(Block(6, 6, 2, 2, sprites[1]));
+            blocks.push_back(Block({i, j}, {1, 1}, sprites[0]));
+    blocks.push_back(Block({6, 6}, {2, 2}, sprites[1]));
+    blocks.push_back(ProgrammableBlock({1, 6}, sprites[2]));
     return true;
 }
 
-void RobotGame::DrawGrid(int blocksize)
+void RobotGame::DrawGrid()
 {
     for (int i = 1; i <= gridSize.x; i++)
     {
@@ -36,10 +39,13 @@ Block* RobotGame::GetBlockAt(olc::vi2d pos)
 {
     for (auto block = blocks.begin(); block != blocks.end(); ++block)
     {
-        if (block->x * blocksize <= pos.x &&
-            block->x * blocksize + block->w * blocksize > pos.x &&
-            block->y * blocksize <= pos.y &&
-            block->y * blocksize + block->h * blocksize > pos.y)
+        Block bScreen = *block;
+        bScreen.pos *= blocksize;
+        bScreen.size *= blocksize;
+        if (bScreen.pos.x <= pos.x &&
+            bScreen.pos.x + bScreen.size.x > pos.x &&
+            bScreen.pos.y <= pos.y &&
+            bScreen.pos.y + bScreen.size.y > pos.y)
             return &(*block);
     }
     return nullptr;
@@ -50,11 +56,10 @@ olc::vi2d RobotGame::GetGridAt(olc::vi2d pos)
     return {pos.x / blocksize, pos.y / blocksize};
 }
 
-bool RobotGame::CanBePlaced(Block* block, olc::vi2d pos)
+bool RobotGame::CanBePlaced(Block* block, olc::vi2d gridpos)
 {
-    olc::vi2d gridpos = this->GetGridAt(pos);
-    for (int i = 0; i < block->w; ++i)
-        for (int j = 0; j < block->h; ++j)
+    for (int i = 0; i < block->size.x; ++i)
+        for (int j = 0; j < block->size.y; ++j)
         {
             olc::vi2d curGridPos = gridpos + olc::vi2d(i, j);
             Block* testedBlock = this->GetBlockAt(curGridPos * blocksize);
@@ -66,51 +71,42 @@ bool RobotGame::CanBePlaced(Block* block, olc::vi2d pos)
 
 void RobotGame::DrawBlock(Block* block)
 {
-    this->DrawPartialSprite({block->x * blocksize, block->y * blocksize},
+    this->DrawPartialSprite(block->pos * blocksize,
                             block->GetSprite(),
                             {0, 0},
-                            {block->w * blocksize, block->h * blocksize});
+                            block->size * blocksize);
+}
+
+void RobotGame::HandleInput()
+{
+    if (this->IsFocused())
+    {
+        std::unique_ptr<IState> newState = this->state->HandleInput(this);
+        if (newState)
+            state = std::move(newState);
+    }
+}
+
+void RobotGame::UpdateState()
+{
+    this->state.get()->Update(this);
 }
 
 bool RobotGame::OnUserUpdate(float fElapsedTime)
 {
     this->SetDrawTarget(this->gameLayer);
     this->Clear(olc::BLACK);
-    this->DrawGrid(10);
+    this->DrawGrid();
 
-    if (this->IsFocused())
-    {
-        if (this->GetMouse(0).bHeld)
-        {
-            Block* block = this->GetBlockAt(this->GetMousePos());
-            if (block && this->state != STATE::DRAGGING)
-            {
-                this->state = STATE::DRAGGING;
-                this->dragging = block;
-                //this->DrawString({0, 90}, "Block found");
-            }
-            else if (this->state == STATE::DRAGGING)
-            {
-                olc::vi2d pos = this->GetMousePos();
-                olc::vi2d gridpos = this->GetGridAt(pos);
-                if (this->CanBePlaced(this->dragging, pos))
-                {
-                    this->dragging->x = gridpos.x;
-                    this->dragging->y = gridpos.y;
-                }
-            }
-        }
-        else if (this->state == STATE::DRAGGING)
-        {
-            this->state = STATE::IDLE;
-            this->dragging = nullptr;
-        }
-        this->DrawString({0, 90}, state == STATE::IDLE ? "Idle" : "Dragging");
-    }
+    this->HandleInput();
+    this->UpdateState();
 
     for (auto block = blocks.begin(); block != blocks.end(); ++block)
         this->DrawBlock(&(*block));
 
+    ImGui::Begin("TestWindow");
+    ImGui::InputTextMultiline("", &codebuf, {300, 500}, ImGuiInputTextFlags_AllowTabInput);
+    ImGui::End();
     ImGui::ShowDemoWindow();
 
     return true;

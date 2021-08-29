@@ -11,15 +11,12 @@ private:
     // ??? outputs;
     // ??? inputs;
 public:
-	int x;
-	int y;
-	int w;
-	int h;
+    olc::vi2d pos;
+    olc::vi2d size;
 
-    Block() : x(0), y(0), w(1), h(1) {}
-    Block(int x, int y) : x(x), y(y), w(1), h(1) {}
-	Block(int x, int y, int w, int h) : x(x), y(y), w(w), h(h) {}
-    Block(int x, int y, int w, int h, std::shared_ptr<olc::Sprite> sprite) : x(x), y(y), w(w), h(h), img(sprite) {}
+    Block() : pos(0, 0), size(1, 1) {}
+    Block(olc::vi2d pos, std::shared_ptr<olc::Sprite> sprite) : pos(pos), size(1, 1), img(sprite) {}
+    Block(olc::vi2d pos, olc::vi2d size, std::shared_ptr<olc::Sprite> sprite) : pos(pos), size(size), img(sprite) {}
 
     virtual void SetSprite(std::shared_ptr<olc::Sprite> sprite);
     olc::Sprite* GetSprite();
