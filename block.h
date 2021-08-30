@@ -2,15 +2,18 @@
 #define BLOCK_H
 
 #include <memory>
+#include <string>
 #include "pge/olcPixelGameEngine.h"
+#include "port.h"
 
 class Block
 {
 private:
     std::shared_ptr<olc::Sprite> img;
-    // ??? outputs;
-    // ??? inputs;
+
 public:
+    std::vector<std::shared_ptr<IPort>> ports;
+    std::string description;
     olc::vi2d pos;
     olc::vi2d size;
 
@@ -20,6 +23,7 @@ public:
 
     virtual void SetSprite(std::shared_ptr<olc::Sprite> sprite);
     olc::Sprite* GetSprite();
+    std::string GetDescription();
 };
 
 #endif // BLOCK_H

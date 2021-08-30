@@ -9,3 +9,8 @@ olc::Sprite* Block::GetSprite()
 {
     return this->img.get();
 }
+
+std::string Block::GetDescription()
+{
+    return this->description;
+}
