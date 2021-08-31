@@ -69,6 +69,28 @@ namespace UIState
         virtual std::unique_ptr<IState> HandleInput(RobotGame* game);
         virtual void Update(RobotGame* game) {}
     };
+
+    class CodeEditState : public IState
+    {
+    public:
+        ProgrammableBlock* target;
+
+        CodeEditState(ProgrammableBlock* target) : target(target) {}
+
+        virtual std::unique_ptr<IState> HandleInput(RobotGame* game);
+        virtual void Update(RobotGame* game) {}
+    };
+
+    class BlockPlaceState : public IState
+    {
+    public:
+        Block* target;
+
+        BlockPlaceState(Block* target) : target(target) {}
+
+        virtual std::unique_ptr<IState> HandleInput(RobotGame* game);
+        virtual void Update(RobotGame* game);
+    };
 }
 
 #endif // UISTATE_H

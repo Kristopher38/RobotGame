@@ -6,6 +6,7 @@ std::unique_ptr<IState> UIState::EditIdleState::HandleInput(RobotGame* game)
     olc::HWButton rmb = game->GetMouse(olc::Mouse::RIGHT);
     olc::vi2d pos = game->GetMousePos();
     Block* block = game->GetBlockAt(pos);
+    Block* invBlock = game->GetBlockUnderMouseInv();
     if (lmb.bPressed && block)
     {
         game->SelectBlock(block);
@@ -14,8 +15,11 @@ std::unique_ptr<IState> UIState::EditIdleState::HandleInput(RobotGame* game)
     }
     else if (rmb.bPressed && block)
     {
-        //game->ShowIOSelection(block);
         return std::make_unique<UIState::IOSelectState>(block, pos);
+    }
+    else if (lmb.bPressed && invBlock)
+    {
+        return std::make_unique<UIState::BlockPlaceState>(invBlock->Clone());
     }
     return nullptr;
 }
@@ -38,17 +42,9 @@ std::unique_ptr<IState> UIState::DraggingState::HandleInput(RobotGame* game)
 
 std::unique_ptr<IState> UIState::IOSelectState::HandleInput(RobotGame* game)
 {
-    const ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoTitleBar |
-                                         ImGuiWindowFlags_NoScrollbar |
-                                         ImGuiWindowFlags_NoMove |
-                                         ImGuiWindowFlags_NoResize |
-                                         ImGuiWindowFlags_NoCollapse |
-                                         ImGuiWindowFlags_NoNav |
-                                         ImGuiWindowFlags_NoBringToFrontOnFocus;
-
     ImGui::SetNextWindowSize({80, 200});
     ImGui::SetNextWindowPos({this->mousepos.x, this->mousepos.y});
-    ImGui::Begin("IO", NULL, windowFlags);
+    ImGui::Begin("IO", NULL, game->popUpMenuFlags);
 
     if (!ImGui::IsWindowFocused())
     {
@@ -67,6 +63,11 @@ std::unique_ptr<IState> UIState::IOSelectState::HandleInput(RobotGame* game)
             ImGui::End();
             return std::make_unique<UIState::LinkingState>(this->target, it->get());
         }
+    }
+    if (this->target->IsProgrammable() && ImGui::Button("Edit code", {80, 30}))
+    {
+        ImGui::End();
+        return std::make_unique<UIState::CodeEditState>(dynamic_cast<ProgrammableBlock*>(this->target));
     }
 
     ImGui::End();
@@ -93,17 +94,9 @@ void UIState::LinkingState::Update(RobotGame* game)
 
 std::unique_ptr<IState> UIState::IOSelectSecondState::HandleInput(RobotGame* game)
 {
-    const ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoTitleBar |
-                                         ImGuiWindowFlags_NoScrollbar |
-                                         ImGuiWindowFlags_NoMove |
-                                         ImGuiWindowFlags_NoResize |
-                                         ImGuiWindowFlags_NoCollapse |
-                                         ImGuiWindowFlags_NoNav |
-                                         ImGuiWindowFlags_NoBringToFrontOnFocus;
-
     ImGui::SetNextWindowSize({80, 200});
     ImGui::SetNextWindowPos({this->mousepos.x, this->mousepos.y});
-    ImGui::Begin("IO", NULL, windowFlags);
+    ImGui::Begin("IO", NULL, game->popUpMenuFlags);
 
     if (!ImGui::IsWindowFocused())
     {
@@ -131,4 +124,47 @@ std::unique_ptr<IState> UIState::IOSelectSecondState::HandleInput(RobotGame* gam
     ImGui::End();
 
     return nullptr;
+}
+
+std::unique_ptr<IState> UIState::CodeEditState::HandleInput(RobotGame* game)
+{
+    static ImVec2 size{300, 200};
+    static ImVec2 pos{32, 32};
+    static bool open = true;
+    //ImGui::SetNextWindowSize({300, 200});
+    //ImGui::SetNextWindowPos({0, 0});
+    if (open)
+    {
+        if (ImGui::Begin("Code Editor", &open, game->codeEditFlags))
+            ImGui::InputTextMultiline("##code", &this->target->code, {300, 400}, ImGuiInputTextFlags_AllowTabInput);
+        ImGui::End();
+        return nullptr;
+    }
+    else
+    {
+        open = true;    // restore original state for next time the window is opened
+        return std::make_unique<UIState::EditIdleState>();
+    }
+    return nullptr;
+}
+
+std::unique_ptr<IState> UIState::BlockPlaceState::HandleInput(RobotGame* game)
+{
+    if (game->GetMouse(olc::Mouse::RIGHT).bPressed)
+        return std::make_unique<UIState::EditIdleState>();
+    else if (game->GetMouse(olc::Mouse::LEFT).bPressed && !game->GetBlockUnderMouse())
+    {
+        game->PlaceBlock(this->target, game->GetGridAt(game->GetMousePos()));
+        return std::make_unique<UIState::EditIdleState>();
+    }
+    return nullptr;
+}
+
+void UIState::BlockPlaceState::Update(RobotGame* game)
+{
+    game->SetDrawTarget(game->gridLayer);
+    auto block = std::unique_ptr<Block>(this->target->Clone());
+    block.get()->pos = game->GetGridAt(game->GetMousePos());
+    if (!game->GetBlockUnderMouse())
+        game->DrawBlock(block.get());
 }
