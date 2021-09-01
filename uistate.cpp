@@ -19,7 +19,13 @@ std::unique_ptr<IState> UIState::EditIdleState::HandleInput(RobotGame* game)
     }
     else if (lmb.bPressed && invBlock)
     {
-        return std::make_unique<UIState::BlockPlaceState>(invBlock->Clone());
+        return std::make_unique<UIState::BlockPlaceState>(std::shared_ptr<Block>(invBlock->Clone()));
+    }
+    else if (game->GetKey(olc::Key::M).bPressed)
+    {
+        game->EnableLayer(game->blocksUILayer, false);
+        game->EnableLayer(game->connectionsLayer, false);
+        return std::make_unique<UIState::InteractIdleState>();
     }
     return nullptr;
 }
@@ -29,6 +35,9 @@ std::unique_ptr<IState> UIState::DraggingState::HandleInput(RobotGame* game)
     olc::HWButton lmb = game->GetMouse(olc::Mouse::LEFT);
     if (lmb.bHeld)
     {
+        ImGui::Begin("Debug");
+        ImGui::Text("%d %d", this->handlepos.x, this->handlepos.y);
+        ImGui::End();
         olc::vi2d pos = game->GetMousePos();
         olc::vi2d gridpos = game->GetGridAt(pos);
         if (game->CanBePlaced(this->target, gridpos - this->handlepos))
@@ -42,7 +51,7 @@ std::unique_ptr<IState> UIState::DraggingState::HandleInput(RobotGame* game)
 
 std::unique_ptr<IState> UIState::IOSelectState::HandleInput(RobotGame* game)
 {
-    ImGui::SetNextWindowSize({80, 200});
+    ImGui::SetNextWindowSize({120, 200});
     ImGui::SetNextWindowPos({this->mousepos.x, this->mousepos.y});
     ImGui::Begin("IO", NULL, game->popUpMenuFlags);
 
@@ -57,11 +66,11 @@ std::unique_ptr<IState> UIState::IOSelectState::HandleInput(RobotGame* game)
     auto ports = &this->target->ports;
     for (auto it = ports->begin(); it != ports->end(); ++it)
     {
-        int idx = it->get()->GetType() == PortType::INPUT ? ++output : ++input;
-        if (ImGui::Selectable((it->get()->GetTypeStr() + std::to_string(idx)).c_str()))
+        int idx = it->second->GetType() == PortType::INPUT ? ++output : ++input;
+        if (ImGui::Selectable((it->first + "##" + std::to_string(idx++)).c_str()))
         {
             ImGui::End();
-            return std::make_unique<UIState::LinkingState>(this->target, it->get());
+            return std::make_unique<UIState::LinkingState>(this->target, it->second.get());
         }
     }
     if (this->target->IsProgrammable() && ImGui::Button("Edit code", {80, 30}))
@@ -88,13 +97,13 @@ std::unique_ptr<IState> UIState::LinkingState::HandleInput(RobotGame* game)
 
 void UIState::LinkingState::Update(RobotGame* game)
 {
-    game->SetDrawTarget(game->connectionsLayer);
-    game->DrawLine(this->target->pos * game->blocksize + olc::vi2d{game->blocksize/2, game->blocksize/2}, game->GetMousePos(), olc::GREEN);
+    game->SetDrawTarget(game->tempLayer);
+    game->DrawLine(game->GetBlockCenter(this->target), game->GetMousePos(), olc::GREEN);
 }
 
 std::unique_ptr<IState> UIState::IOSelectSecondState::HandleInput(RobotGame* game)
 {
-    ImGui::SetNextWindowSize({80, 200});
+    ImGui::SetNextWindowSize({120, 200});
     ImGui::SetNextWindowPos({this->mousepos.x, this->mousepos.y});
     ImGui::Begin("IO", NULL, game->popUpMenuFlags);
 
@@ -108,17 +117,17 @@ std::unique_ptr<IState> UIState::IOSelectSecondState::HandleInput(RobotGame* gam
     auto ports = &this->target->ports;
     for (auto it = ports->begin(); it != ports->end(); ++it)
     {
-        if (it->get()->GetType() != this->sourcePort->GetType())
+        if (it->second->GetType() != this->sourcePort->GetType())
         {
-            if (ImGui::Selectable((it->get()->GetTypeStr() + std::to_string(++idx)).c_str()))
+            if (ImGui::Selectable((it->first + "##" + std::to_string(idx++)).c_str()))
             {
-                this->sourcePort->Connect(it->get());
+                this->sourcePort->Connect(it->second.get());
                 ImGui::End();
                 return std::make_unique<UIState::EditIdleState>();
             }
         }
         else
-            ImGui::Selectable((it->get()->GetTypeStr() + std::to_string(++idx)).c_str(), false, ImGuiSelectableFlags_Disabled);
+            ImGui::Selectable((it->second->GetTypeStr() + std::to_string(++idx)).c_str(), false, ImGuiSelectableFlags_Disabled);
     }
 
     ImGui::End();
@@ -136,7 +145,11 @@ std::unique_ptr<IState> UIState::CodeEditState::HandleInput(RobotGame* game)
     if (open)
     {
         if (ImGui::Begin("Code Editor", &open, game->codeEditFlags))
+        {
             ImGui::InputTextMultiline("##code", &this->target->code, {300, 400}, ImGuiInputTextFlags_AllowTabInput);
+            if (!this->target->VerifyCode())
+                ImGui::Text(this->target->GetError().c_str());
+        }
         ImGui::End();
         return nullptr;
     }
@@ -152,9 +165,10 @@ std::unique_ptr<IState> UIState::BlockPlaceState::HandleInput(RobotGame* game)
 {
     if (game->GetMouse(olc::Mouse::RIGHT).bPressed)
         return std::make_unique<UIState::EditIdleState>();
-    else if (game->GetMouse(olc::Mouse::LEFT).bPressed && !game->GetBlockUnderMouse())
+    else if (game->GetMouse(olc::Mouse::LEFT).bPressed && game->CanBePlaced(this->target.get(), this->target->pos))
     {
-        game->PlaceBlock(this->target, game->GetGridAt(game->GetMousePos()));
+        this->target->pos = game->GetGridAt(game->GetMousePos());
+        game->PlaceBlock(this->target);
         return std::make_unique<UIState::EditIdleState>();
     }
     return nullptr;
@@ -162,9 +176,29 @@ std::unique_ptr<IState> UIState::BlockPlaceState::HandleInput(RobotGame* game)
 
 void UIState::BlockPlaceState::Update(RobotGame* game)
 {
-    game->SetDrawTarget(game->gridLayer);
-    auto block = std::unique_ptr<Block>(this->target->Clone());
-    block.get()->pos = game->GetGridAt(game->GetMousePos());
-    if (!game->GetBlockUnderMouse())
-        game->DrawBlock(block.get());
+    game->SetDrawTarget(game->tempLayer);
+    this->target->pos = game->GetGridAt(game->GetMousePos());
+    if (game->CanBePlaced(this->target.get(), this->target->pos))
+        game->DrawBlock(this->target.get());
+}
+
+std::unique_ptr<IState> UIState::InteractIdleState::HandleInput(RobotGame* game)
+{
+   Block* block = game->GetBlockUnderMouse();
+   if (game->GetKey(olc::Key::M).bPressed)
+   {
+       game->EnableLayer(game->blocksUILayer, true);
+       game->EnableLayer(game->connectionsLayer, true);
+       return std::make_unique<UIState::EditIdleState>();
+   }
+   else if (block)
+   {
+       block->HandleInput(game);
+   }
+   return nullptr;
+}
+
+void UIState::InteractIdleState::Update(RobotGame* game)
+{
+    game->SimTick();
 }

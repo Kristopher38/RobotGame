@@ -11,6 +11,7 @@
 #include "lua/lua.hpp"
 #include "block.h"
 #include "programmableblock.h"
+#include "buttonblock.h"
 #include "uistate.h"
 
 class IState;
@@ -21,7 +22,7 @@ class RobotGame : public olc::PixelGameEngine
 private:
     olc::imgui::PGE_ImGUI pge_imgui;
 
-    std::map<std::string, std::shared_ptr<olc::Sprite>> sprites;
+
     std::vector<std::shared_ptr<Block>> blocks;
     std::vector<std::shared_ptr<Block>> inventory;
     olc::vi2d gridSize = {16, 9};
@@ -33,7 +34,7 @@ private:
 
     Block* selectedBlock = nullptr;
 public:
-
+    std::map<std::string, std::shared_ptr<olc::Sprite>> sprites;
     const int spritesize = 16;                          // one grid unit image size
     const int spritescale = 4;                          // sprite scaling ratio
     const int blocksize = spritesize * spritescale;     // one grid unit rendered size
@@ -55,11 +56,14 @@ public:
     uint8_t gridLayer;
     uint8_t blocksUILayer;
     uint8_t infoUILayer;
+    uint8_t tempLayer;
+    uint8_t mapGridLayer;
     std::unique_ptr<IState> state;
 
     RobotGame();
     bool OnUserCreate() override;
     bool OnUserUpdate(float fElapsedTime) override;
+    void SimTick();
 
     void DrawGrid();
     olc::vi2d GetResolution();
@@ -74,7 +78,7 @@ public:
     void DrawBlocks();
     void DrawBlocksUI();
     void ShowDebugWindow();
-    void PlaceBlock(const Block* schema, olc::vi2d pos);
+    void PlaceBlock(std::shared_ptr<Block> block);
     olc::vi2d GetBlockCenter(Block* block);
     void DrawConnections();
     void SelectBlock(Block* block);

@@ -7,7 +7,7 @@ link_directories("C:\\Libraries\\include\\lua")
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if (UNIX)
-	set(CMAKE_CXX_FLAGS "-lX11 -lGL -lpthread -lpng -lstdc++fs -llua53")
+	set(CMAKE_CXX_FLAGS "-O0 -lX11 -lGL -lpthread -lpng -lstdc++fs -llua53")
 endif (UNIX)
 
 add_executable(${PROJECT_NAME}
@@ -16,6 +16,7 @@ add_executable(${PROJECT_NAME}
 	"uistate.cpp"
 	"block.cpp"
 	"programmableblock.cpp"
+	"buttonblock.cpp"
 	"pge/imgui.cpp"
 	"pge/imgui_demo.cpp"
 	"pge/imgui_draw.cpp"
@@ -31,7 +32,7 @@ if (WIN32)
 	target_link_libraries(${PROJECT_NAME} gdiplus.lib)
 	target_link_libraries(${PROJECT_NAME} Shlwapi.lib)
 	target_link_libraries(${PROJECT_NAME} dwmapi.lib)
-	target_link_libraries(${PROJECT_NAME} liblua53.a)
+	target_link_libraries(${PROJECT_NAME} liblua.a)
 endif (WIN32)
 
 

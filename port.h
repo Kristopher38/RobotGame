@@ -17,16 +17,14 @@ public:
     std::unordered_set<IPort*> connections;
     Block* owner;
 	DataValue data;
-    std::string name;
+    DataValue nextData;
 
     IPort(Block* owner) : owner(owner) {}
-    IPort(Block* owner, std::string name) : owner(owner), name(name) {}
     IPort(const IPort& other)
     {
         this->connections = other.connections;
         this->owner = other.owner;
         this->data = other.data;
-        this->name = other.name;
     }
     virtual std::string GetTypeStr() = 0;
 	virtual PortType GetType() = 0;
@@ -41,6 +39,14 @@ public:
         connections.erase(port);
         port->connections.erase(this);
     }
+    virtual void Update(DataValue newData)
+    {
+        this->nextData = newData;
+    }
+    virtual void Swap()
+    {
+        this->data = this->nextData;
+    }
     virtual ~IPort()
     {
         for (auto conn = connections.begin(); conn != connections.end(); ++conn)
@@ -52,7 +58,6 @@ class InputPort : public IPort
 {
 public:
     InputPort(Block* owner) : IPort(owner) {}
-    InputPort(Block* owner, std::string name) : IPort(owner, name) {}
     InputPort(const InputPort& other) : IPort(other) {}
     virtual std::string GetTypeStr() { return "Input"; }
     virtual PortType GetType() { return PortType::INPUT; }
@@ -63,7 +68,6 @@ class OutputPort : public IPort
 {
 public:
     OutputPort(Block* owner) : IPort(owner) {}
-    OutputPort(Block* owner, std::string name) : IPort(owner, name) {}
     OutputPort(const OutputPort& other) : IPort(other) {}
     virtual std::string GetTypeStr() { return "Output"; }
     virtual PortType GetType() { return PortType::OUTPUT; }

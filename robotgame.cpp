@@ -11,14 +11,20 @@ RobotGame::RobotGame() : pge_imgui(true)
 
 bool RobotGame::OnUserCreate()
 {
+    this->tempLayer = this->CreateLayer();
     this->connectionsLayer = this->CreateLayer();
-    this->gridLayer = this->CreateLayer();
     this->blocksUILayer = this->CreateLayer();
     this->infoUILayer = this->CreateLayer();
-    this->EnableLayer(this->gridLayer, true);
+    this->mapGridLayer = this->CreateLayer();
+    this->gridLayer = this->CreateLayer();
+
+    this->EnableLayer(this->tempLayer, true);
+    this->EnableLayer(this->connectionsLayer, true);
     this->EnableLayer(this->blocksUILayer, true);
     this->EnableLayer(this->infoUILayer, true);
-    this->EnableLayer(this->connectionsLayer, true);
+    this->EnableLayer(this->mapGridLayer, true);
+    this->EnableLayer(this->gridLayer, true);
+
     this->ClearLayers();
 
     std::filesystem::path assets("assets/sprites");
@@ -29,25 +35,16 @@ bool RobotGame::OnUserCreate()
             sprites[fpath.stem().string()] = std::make_shared<olc::Sprite>(fpath.string());
     }
 
-    //sprites.push_back(std::make_shared<olc::Sprite>("assets/default_block.png"));
-    //sprites.push_back(std::make_shared<olc::Sprite>("assets/default_big_block.png"));
-    //sprites.push_back(std::make_shared<olc::Sprite>("assets/code_block.png"));
     inventory.push_back(std::make_shared<Block>(olc::vi2d{0, 0}, olc::vi2d{1, 1}, sprites["default_block"], 2, 2));
     inventory.push_back(std::make_shared<Block>(olc::vi2d{0, 0}, olc::vi2d{2, 2}, sprites["default_big_block"], 2, 4));
-    inventory.push_back(std::make_shared<ProgrammableBlock>(olc::vi2d{0, 0}, sprites["code_block"], 1, 1));
-
-//    blocks.push_back(std::make_shared<Block>(olc::vi2d{6, 6}, olc::vi2d{2, 2}, sprites["default_big_block"]));
-//    blocks.back()->description = "Big block";
-//    blocks.push_back(std::make_shared<ProgrammableBlock>(olc::vi2d{1, 6}, sprites["code_block"]));
-//    dynamic_cast<ProgrammableBlock*>(blocks.back().get())->code = "dupa";
-//    blocks.back()->description = "Programmable block Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas vehicula massa turpis, in posuere nunc luctus et. Sed non mauris vitae lectus pulvinar rhoncus sit amet sit amet tortor. Donec elit massa, tristique sit amet feugiat et, porttitor ut dolor. Nullam malesuada finibus vehicula. Morbi et efficitur tellus.";
+    inventory.push_back(std::make_shared<ProgrammableBlock>(olc::vi2d{0, 0}, sprites["code_block"], std::vector<std::string>{"input_1"}, std::vector<std::string>{"output_1"}));
+    inventory.push_back(std::make_shared<ButtonBlock>(olc::vi2d{0, 0}, sprites["button"]));
     return true;
 }
 
 void RobotGame::DrawGrid()
 {
     this->SetDrawTarget(this->gridLayer);
-    this->Clear(olc::BLANK);
     for (int i = 1; i <= gridSize.x; i++)
     {
         this->DrawLine({i * blocksize - 1, 0}, {i * blocksize - 1, this->gridSize.y * blocksize - 1}, olc::GREY);
@@ -68,7 +65,7 @@ Block* RobotGame::GetBlockAt(olc::vi2d pos)
 {
     for (auto block = blocks.begin(); block != blocks.end(); ++block)
     {
-        if (this->CursorCollide(block->get()->pos * blocksize, block->get()->size * blocksize, this->GetMousePos()))
+        if (this->CursorCollide(block->get()->pos * blocksize, block->get()->size * blocksize, pos))
             return block->get();
     }
     return nullptr;
@@ -100,11 +97,6 @@ bool RobotGame::CanBePlaced(Block* block, olc::vi2d gridpos)
 void RobotGame::DrawBlock(Block* block)
 {
     this->DrawBlockSprite(block->pos * blocksize, block);
-//    this->DrawPartialSprite(block->pos * blocksize,
-//                            block->GetSprite(),
-//                            {0, 0},
-//                            block->size * (blocksize / spritescale),
-//                            spritescale);
 }
 
 void RobotGame::DrawBlockSprite(olc::vi2d pos, Block* block)
@@ -123,7 +115,11 @@ void RobotGame::HandleInput()
     {
         std::unique_ptr<IState> newState = this->state->HandleInput(this);
         if (newState)
-            state = std::move(newState);
+        {
+            this->state->OnExit(this);
+            this->state = std::move(newState);
+            this->state->OnEnter(this);
+        }
     }
 }
 
@@ -148,7 +144,7 @@ void RobotGame::DrawInfoUI()
         olc::vi2d size = this->GetWindowSize() - pos;
         ImGui::SetNextWindowPos({pos.x, pos.y});
         ImGui::SetNextWindowSize({size.x, size.y});
-        ImGui::Begin("Info", NULL, this->infoMenuFlags);
+        ImGui::Begin("##Info", NULL, this->infoMenuFlags);
         ImGui::TextWrapped(this->selectedBlock->GetDescription().c_str());
         ImGui::End();
     }
@@ -156,7 +152,7 @@ void RobotGame::DrawInfoUI()
 
 olc::vi2d RobotGame::GetBlockCenter(Block* block)
 {
-    return block->pos * blocksize + olc::vi2d{blocksize/2, blocksize/2};
+    return ((block->pos * 2 + block->size) * blocksize) / 2;
 }
 
 void RobotGame::DrawConnections()
@@ -166,7 +162,7 @@ void RobotGame::DrawConnections()
     {
         for (auto port = block->get()->ports.begin(); port != block->get()->ports.end(); ++port)
         {
-            for (auto conn = port->get()->connections.begin(); conn != port->get()->connections.end(); ++conn)
+            for (auto conn = port->second->connections.begin(); conn != port->second->connections.end(); ++conn)
             {
                 this->DrawLine(this->GetBlockCenter(block->get()), this->GetBlockCenter((*conn)->owner), olc::GREEN);
             }
@@ -176,7 +172,7 @@ void RobotGame::DrawConnections()
 
 void RobotGame::DrawBlocks()
 {
-    this->SetDrawTarget(this->gridLayer);
+    this->SetDrawTarget(this->mapGridLayer);
     for (auto block = blocks.begin(); block != blocks.end(); ++block)
         this->DrawBlock(block->get());
 }
@@ -190,6 +186,10 @@ void RobotGame::ClearLayers()
     this->SetDrawTarget(this->infoUILayer);
     this->Clear(olc::BLANK);
     this->SetDrawTarget(this->blocksUILayer);
+    this->Clear(olc::BLANK);
+    this->SetDrawTarget(this->tempLayer);
+    this->Clear(olc::BLANK);
+    this->SetDrawTarget(this->mapGridLayer);
     this->Clear(olc::BLANK);
 }
 
@@ -216,10 +216,10 @@ void RobotGame::ShowDebugWindow()
 
     ImGui::End();
 
-    this->EnableLayer(gridLayer, gridEnabled);
-    this->EnableLayer(connectionsLayer, connEnabled);
-    this->EnableLayer(infoUILayer, infoUIEnabled);
-    this->EnableLayer(blocksUILayer, blocksUIEnabled);
+//    this->EnableLayer(gridLayer, gridEnabled);
+//    this->EnableLayer(connectionsLayer, connEnabled);
+//    this->EnableLayer(infoUILayer, infoUIEnabled);
+//    this->EnableLayer(blocksUILayer, blocksUIEnabled);
 }
 
 olc::vi2d RobotGame::GetResolution()
@@ -230,10 +230,8 @@ olc::vi2d RobotGame::GetResolution()
     return {w, h};
 }
 
-void RobotGame::PlaceBlock(const Block* schema, olc::vi2d pos)
+void RobotGame::PlaceBlock(std::shared_ptr<Block> block)
 {
-    std::shared_ptr<Block> block = std::make_shared<Block>(*schema);
-    block->pos = pos;
     this->blocks.push_back(block);
 }
 
@@ -252,8 +250,6 @@ Block* RobotGame::GetBlockUnderMouseInv()
 void RobotGame::DrawBlocksUI()
 {
     this->SetDrawTarget(this->blocksUILayer);
-    this->Clear(olc::BLANK);
-
     this->blocksMenuPos = {0, this->gridSize.y * blocksize};
 
     int posx = 0;
@@ -261,6 +257,23 @@ void RobotGame::DrawBlocksUI()
     {
         this->DrawBlockSprite({posx, this->blocksMenuPos.y}, block.get());
         posx += block->size.x * blocksize + uiPadding;
+    }
+}
+
+void RobotGame::SimTick()
+{
+    for (auto block : blocks)
+    {
+        if (block->IsProgrammable())
+        {
+            auto progBlock = std::dynamic_pointer_cast<ProgrammableBlock>(block);
+            if (!progBlock->RunOnce())
+            {
+                ImGui::Begin("Debug");
+                ImGui::Text(progBlock->GetError().c_str());
+                ImGui::End();
+            }
+        }
     }
 }
 

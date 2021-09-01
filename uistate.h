@@ -17,7 +17,6 @@ namespace UIState
     {
     public:
         virtual std::unique_ptr<IState> HandleInput(RobotGame* game);
-        virtual void Update(RobotGame* game) {}
     };
 
     class IOSelectState : public IState
@@ -28,7 +27,6 @@ namespace UIState
 
         IOSelectState(Block* target, olc::vi2d mousepos) : target(target), mousepos(mousepos) {}
         virtual std::unique_ptr<IState> HandleInput(RobotGame* game);
-        virtual void Update(RobotGame* game) {}
     };
 
     class DraggingState : public IState
@@ -41,7 +39,6 @@ namespace UIState
         DraggingState(Block* target, olc::vi2d startpos, olc::vi2d handlepos) : target(target), startpos(startpos), handlepos(handlepos) {}
 
         virtual std::unique_ptr<IState> HandleInput(RobotGame* game);
-        virtual void Update(RobotGame* game) {}
     };
 
     class LinkingState : public IState
@@ -67,7 +64,6 @@ namespace UIState
         IOSelectSecondState(Block* source, IPort* sourcePort, Block* target, olc::vi2d mousepos) : source(source), sourcePort(sourcePort), target(target), mousepos(mousepos) {}
 
         virtual std::unique_ptr<IState> HandleInput(RobotGame* game);
-        virtual void Update(RobotGame* game) {}
     };
 
     class CodeEditState : public IState
@@ -78,16 +74,22 @@ namespace UIState
         CodeEditState(ProgrammableBlock* target) : target(target) {}
 
         virtual std::unique_ptr<IState> HandleInput(RobotGame* game);
-        virtual void Update(RobotGame* game) {}
     };
 
     class BlockPlaceState : public IState
     {
     public:
-        Block* target;
+        std::shared_ptr<Block> target;
 
-        BlockPlaceState(Block* target) : target(target) {}
+        BlockPlaceState(std::shared_ptr<Block> target) : target(target) {}
 
+        virtual std::unique_ptr<IState> HandleInput(RobotGame* game);
+        virtual void Update(RobotGame* game);
+    };
+
+    class InteractIdleState : public IState
+    {
+    public:
         virtual std::unique_ptr<IState> HandleInput(RobotGame* game);
         virtual void Update(RobotGame* game);
     };

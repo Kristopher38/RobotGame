@@ -1,5 +1,6 @@
 #include <iostream>
 #include "robotgame.h"
+#include "lua/lua.hpp"
 
 using namespace std;
 
