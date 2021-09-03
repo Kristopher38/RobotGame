@@ -184,21 +184,33 @@ void UIState::BlockPlaceState::Update(RobotGame* game)
 
 std::unique_ptr<IState> UIState::InteractIdleState::HandleInput(RobotGame* game)
 {
-   Block* block = game->GetBlockUnderMouse();
    if (game->GetKey(olc::Key::M).bPressed)
    {
        game->EnableLayer(game->blocksUILayer, true);
        game->EnableLayer(game->connectionsLayer, true);
        return std::make_unique<UIState::EditIdleState>();
    }
-   else if (block)
-   {
-       block->HandleInput(game);
-   }
    return nullptr;
 }
 
 void UIState::InteractIdleState::Update(RobotGame* game)
 {
-    game->SimTick();
+    float tpsInv = 1.0f / game->tps;
+    this->timeCounter += game->timedelta;
+    if (this->timeCounter >= tpsInv)
+    {
+        this->timeCounter = this->timeCounter - tpsInv;
+        game->SimTick();
+    }
+}
+
+void UIState::InteractIdleState::OnEnter(RobotGame* game)
+{
+    this->timeCounter = 0.0f;
+    game->SimStart();
+}
+
+void UIState::InteractIdleState::OnExit(RobotGame* game)
+{
+    game->SimStop();
 }

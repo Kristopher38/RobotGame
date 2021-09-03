@@ -1088,13 +1088,16 @@ namespace olc
 		// State of keyboard		
 		bool		pKeyNewState[256] = { 0 };
 		bool		pKeyOldState[256] = { 0 };
+	public:
 		HWButton	pKeyboardState[256] = { 0 };
-
+	private:
 		// State of mouse
 		bool		pMouseNewState[nMouseButtons] = { 0 };
 		bool		pMouseOldState[nMouseButtons] = { 0 };
+	public:
 		HWButton	pMouseState[nMouseButtons] = { 0 };
 
+	private:
 		// The main engine thread
 		void		EngineThread();
 

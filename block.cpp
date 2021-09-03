@@ -1,6 +1,13 @@
 #include "block.h"
 
-Block::Block(olc::vi2d pos, olc::vi2d size, std::shared_ptr<olc::Sprite> sprite, int inputPorts, int outputPorts) : Block(pos, size, sprite)
+Block::Block(SpriteManager* sm, olc::vi2d pos) : Block(sm, pos, {1, 1}) {}
+
+Block::Block(SpriteManager* sm, olc::vi2d pos, olc::vi2d size) : sm(sm), pos(pos), size(size)
+{
+    this->SetSprite("default_block");
+}
+
+Block::Block(SpriteManager* sm, olc::vi2d pos, olc::vi2d size, int inputPorts, int outputPorts) : Block(sm, pos, size)
 {
     for (int i = 0; i < inputPorts; ++i)
         this->ports["Input " + std::to_string(i)] = std::make_shared<InputPort>(this);
@@ -8,7 +15,7 @@ Block::Block(olc::vi2d pos, olc::vi2d size, std::shared_ptr<olc::Sprite> sprite,
         this->ports["Output " + std::to_string(i)] = std::make_shared<OutputPort>(this);
 }
 
-Block::Block(olc::vi2d pos, olc::vi2d size, std::shared_ptr<olc::Sprite> sprite, std::vector<std::string> inputPorts, std::vector<std::string> outputPorts) : pos(pos), size(size), img(sprite)
+Block::Block(SpriteManager* sm, olc::vi2d pos, olc::vi2d size, std::vector<std::string> inputPorts, std::vector<std::string> outputPorts) : sm(sm), pos(pos), size(size)
 {
     for (auto port : inputPorts)
         this->ports[port] = std::make_shared<InputPort>(this);
@@ -18,6 +25,7 @@ Block::Block(olc::vi2d pos, olc::vi2d size, std::shared_ptr<olc::Sprite> sprite,
 
 Block::Block(const Block& other)
 {
+    this->sm = other.sm;
     this->img = other.img;
     this->size = other.size;
     this->pos = other.pos;
@@ -29,9 +37,9 @@ Block::Block(const Block& other)
     }
 }
 
-void Block::SetSprite(std::shared_ptr<olc::Sprite> sprite)
+void Block::SetSprite(std::string name)
 {
-    this->img = sprite;
+    this->img = sm->GetSprite(name);
 }
 
 olc::Sprite* Block::GetSprite()
@@ -52,4 +60,14 @@ bool Block::IsProgrammable()
 Block* Block::Clone()
 {
     return new Block(*this);
+}
+
+void Block::Update(float timedelta) {}
+
+void Block::Swap()
+{
+    for (auto port : ports)
+        port.second->Propagate();
+    for (auto port : ports)
+        port.second->Swap();
 }

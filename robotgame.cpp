@@ -27,18 +27,11 @@ bool RobotGame::OnUserCreate()
 
     this->ClearLayers();
 
-    std::filesystem::path assets("assets/sprites");
-    for (auto const& file : std::filesystem::directory_iterator(assets))
-    {
-        std::filesystem::path fpath = file.path();
-        if (fpath.extension().string() == std::string(".png"))
-            sprites[fpath.stem().string()] = std::make_shared<olc::Sprite>(fpath.string());
-    }
+    this->sm.LoadAll();
 
-    inventory.push_back(std::make_shared<Block>(olc::vi2d{0, 0}, olc::vi2d{1, 1}, sprites["default_block"], 2, 2));
-    inventory.push_back(std::make_shared<Block>(olc::vi2d{0, 0}, olc::vi2d{2, 2}, sprites["default_big_block"], 2, 4));
-    inventory.push_back(std::make_shared<ProgrammableBlock>(olc::vi2d{0, 0}, sprites["code_block"], std::vector<std::string>{"input_1"}, std::vector<std::string>{"output_1"}));
-    inventory.push_back(std::make_shared<ButtonBlock>(olc::vi2d{0, 0}, sprites["button"]));
+    inventory.push_back(std::make_shared<ProgrammableBlock>(&sm, olc::vi2d{0, 0}, std::vector<std::string>{"input_1"}, std::vector<std::string>{"output_1"}));
+    inventory.push_back(std::make_shared<ButtonBlock>(&sm, olc::vi2d{0, 0}));
+    inventory.push_back(std::make_shared<DiodeBlock>(&sm, olc::vi2d{0, 0}));
     return true;
 }
 
@@ -113,12 +106,24 @@ void RobotGame::HandleInput()
 {
     if (this->IsFocused())
     {
+        InputState input;
+        input.kbd = this->pKeyboardState;
+        input.mousepos = this->GetMousePos();
+        input.lmb = this->GetMouse(olc::Mouse::LEFT);
+        input.rmb = this->GetMouse(olc::Mouse::RIGHT);
+        input.mmb = this->GetMouse(olc::Mouse::MIDDLE);
+
         std::unique_ptr<IState> newState = this->state->HandleInput(this);
         if (newState)
         {
             this->state->OnExit(this);
             this->state = std::move(newState);
             this->state->OnEnter(this);
+        }
+
+        for (auto block : blocks)
+        {
+            block->HandleInput(this->GetBlockUnderMouse() == block.get(), &input);
         }
     }
 }
@@ -260,25 +265,29 @@ void RobotGame::DrawBlocksUI()
     }
 }
 
+void RobotGame::SimStart()
+{
+    for (auto block : blocks)
+        block->Start();
+}
+
+void RobotGame::SimStop()
+{
+    for (auto block : blocks)
+        block->Stop();
+}
+
 void RobotGame::SimTick()
 {
     for (auto block : blocks)
-    {
-        if (block->IsProgrammable())
-        {
-            auto progBlock = std::dynamic_pointer_cast<ProgrammableBlock>(block);
-            if (!progBlock->RunOnce())
-            {
-                ImGui::Begin("Debug");
-                ImGui::Text(progBlock->GetError().c_str());
-                ImGui::End();
-            }
-        }
-    }
+        block->Update(this->timedelta);
+    for (auto block : blocks)
+        block->Swap();
 }
 
 bool RobotGame::OnUserUpdate(float fElapsedTime)
 {
+    this->timedelta = fElapsedTime;
     this->ClearLayers();
 
     this->HandleInput();

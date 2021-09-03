@@ -1,6 +1,11 @@
 #include "buttonblock.h"
 #include "robotgame.h"
 
+ButtonBlock::ButtonBlock(const ButtonBlock& other) : Block(other)
+{
+    this->state = other.state;
+}
+
 std::string ButtonBlock::GetDescription()
 {
     return "Button block. Returns 0 or 1 on its output depending on whether it's being pressed or not";
@@ -11,17 +16,31 @@ ButtonBlock* ButtonBlock::Clone()
     return new ButtonBlock(*this);
 }
 
-void ButtonBlock::HandleInput(RobotGame* game)
+void ButtonBlock::HandleInput(bool isPointedAt, InputState* input)
 {
-    olc::HWButton lmb = game->GetMouse(olc::Mouse::LEFT);
-    if (lmb.bHeld)
+    if (isPointedAt)
+        this->state = input->lmb.bHeld;
+    else
+        this->state = false;
+}
+
+void ButtonBlock::Update(float timedelta)
+{
+    Block::Update(timedelta);
+    if (this->state)
     {
-        this->SetSprite(game->sprites["button_pressed"]);
-        this->ports["btn_value"]->Update(1);
+        this->SetSprite("button_pressed");
+        this->ports["btn_value"]->Update(true);
     }
     else
     {
-        this->SetSprite(game->sprites["button"]);
-        this->ports["btn_value"]->Update(0);
+        this->SetSprite("button");
+        this->ports["btn_value"]->Update(false);
     }
+}
+
+void ButtonBlock::Stop()
+{
+    this->state = false;
+    this->SetSprite("button");
 }

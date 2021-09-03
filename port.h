@@ -4,12 +4,15 @@
 #include <string>
 #include <vector>
 #include <unordered_set>
+#include <variant>
 
 class Block;
 
 enum class PortType {INPUT, OUTPUT};
 
-typedef int DataValue;
+typedef std::monostate nil;
+
+typedef std::variant<nil, bool, int64_t, double, std::string> DataValue;
 
 class IPort
 {
@@ -19,16 +22,20 @@ public:
 	DataValue data;
     DataValue nextData;
 
-    IPort(Block* owner) : owner(owner) {}
+    IPort(Block* owner) : owner(owner), data(0), nextData(0) {}
     IPort(const IPort& other)
     {
         this->connections = other.connections;
         this->owner = other.owner;
         this->data = other.data;
+        this->nextData = other.nextData;
     }
     virtual std::string GetTypeStr() = 0;
 	virtual PortType GetType() = 0;
     virtual IPort* Clone() = 0;
+    virtual bool IsInput() = 0;
+    virtual bool IsOutput() = 0;
+
     virtual void Connect(IPort* port)
     {
         port->connections.insert(this);
@@ -43,9 +50,20 @@ public:
     {
         this->nextData = newData;
     }
+    virtual DataValue GetData()
+    {
+        return this->data;
+    }
     virtual void Swap()
     {
         this->data = this->nextData;
+    }
+    virtual void Propagate()
+    {
+        if (this->IsOutput())
+            for (auto conn : this->connections)
+                if (conn->IsInput())
+                    conn->Update(this->nextData);
     }
     virtual ~IPort()
     {
@@ -62,6 +80,8 @@ public:
     virtual std::string GetTypeStr() { return "Input"; }
     virtual PortType GetType() { return PortType::INPUT; }
     virtual InputPort* Clone() { return new InputPort(*this); }
+    virtual bool IsInput() { return true; }
+    virtual bool IsOutput() { return false; }
 };
 
 class OutputPort : public IPort
@@ -72,6 +92,8 @@ public:
     virtual std::string GetTypeStr() { return "Output"; }
     virtual PortType GetType() { return PortType::OUTPUT; }
     virtual OutputPort* Clone() { return new OutputPort(*this); }
+    virtual bool IsInput() { return false; }
+    virtual bool IsOutput() { return true; }
 };
 
 #endif // PORT_H

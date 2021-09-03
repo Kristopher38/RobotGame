@@ -2,6 +2,8 @@
 #include "robotgame.h"
 #include "lua/lua.hpp"
 
+#include <variant>
+
 using namespace std;
 
 int main()

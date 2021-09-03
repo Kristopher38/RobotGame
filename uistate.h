@@ -89,9 +89,13 @@ namespace UIState
 
     class InteractIdleState : public IState
     {
+    private:
+        float timeCounter;
     public:
         virtual std::unique_ptr<IState> HandleInput(RobotGame* game);
         virtual void Update(RobotGame* game);
+        void OnEnter(RobotGame* game);
+        void OnExit(RobotGame* game);
     };
 }
 

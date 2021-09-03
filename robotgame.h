@@ -12,7 +12,9 @@
 #include "block.h"
 #include "programmableblock.h"
 #include "buttonblock.h"
+#include "diodeblock.h"
 #include "uistate.h"
+#include "inputstate.h"
 
 class IState;
 
@@ -34,7 +36,9 @@ private:
 
     Block* selectedBlock = nullptr;
 public:
-    std::map<std::string, std::shared_ptr<olc::Sprite>> sprites;
+    float timedelta;
+    const int tps = 60;
+    SpriteManager sm;
     const int spritesize = 16;                          // one grid unit image size
     const int spritescale = 4;                          // sprite scaling ratio
     const int blocksize = spritesize * spritescale;     // one grid unit rendered size
@@ -87,6 +91,8 @@ public:
     void DrawUI(void);
     void HandleInput();
     void UpdateState();
+    void SimStart();
+    void SimStop();
 };
 
 #endif // GAME_H

@@ -7,12 +7,16 @@ class RobotGame;
 
 class ButtonBlock : public Block
 {
+private:
+    bool state;
 public:
-    ButtonBlock(olc::vi2d pos, std::shared_ptr<olc::Sprite> sprite) : Block(pos, {1, 1}, sprite, {}, {"btn_value"}) {}
-    ButtonBlock(const ButtonBlock& other) : Block(other) {}
+    ButtonBlock(SpriteManager* sm, olc::vi2d pos) : Block(sm, pos, {1, 1}, {}, {"btn_value"}), state(false) { this->SetSprite("button"); }
+    ButtonBlock(const ButtonBlock& other);
     virtual std::string GetDescription();
     virtual ButtonBlock* Clone();
-    virtual void HandleInput(RobotGame* game);
+    virtual void HandleInput(bool isPointedAt, InputState* input);
+    virtual void Update(float timedelta);
+    virtual void Stop();
 };
 
 #endif // BUTTONBLOCK_H
