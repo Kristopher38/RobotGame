@@ -19,7 +19,8 @@ std::unique_ptr<IState> UIState::EditIdleState::HandleInput(RobotGame* game)
     }
     else if (lmb.bPressed && invBlock)
     {
-        return std::make_unique<UIState::BlockPlaceState>(std::shared_ptr<Block>(invBlock->Clone()));
+        if (game->InvCount(invBlock) > 0)
+            return std::make_unique<UIState::BlockPlaceState>(std::shared_ptr<Block>(invBlock->Clone()));
     }
     else if (game->GetKey(olc::Key::M).bPressed)
     {
@@ -103,6 +104,7 @@ std::unique_ptr<IState> UIState::IOSelectState::HandleInput(RobotGame* game)
     if (ImGui::Button("Remove", {80, 30}))
     {
         game->RemoveBlock(this->target);
+        game->IncrInvCount(this->target->schema, 1);
         return std::make_unique<UIState::EditIdleState>();
     }
 
@@ -198,8 +200,13 @@ std::unique_ptr<IState> UIState::BlockPlaceState::HandleInput(RobotGame* game)
     else if (game->GetMouse(olc::Mouse::LEFT).bPressed && game->CanBePlaced(this->target.get(), this->target->pos))
     {
         this->target->pos = game->GetGridAt(game->GetMousePos());
-        game->PlaceBlock(this->target);
-        return std::make_unique<UIState::EditIdleState>();
+
+        if (game->InvCount(this->target->schema) > 0)
+        {
+            game->PlaceBlock(this->target);
+            game->IncrInvCount(this->target->schema, -1);
+            return std::make_unique<UIState::EditIdleState>();
+        }
     }
     return nullptr;
 }

@@ -22,6 +22,7 @@ public:
     std::map<std::string, std::shared_ptr<IPort>> ports;
     olc::vi2d pos;
     olc::vi2d size;
+    const Block* schema;
 
     Block() : pos(0, 0), size(1, 1) {}
     Block(SpriteManager* sm, olc::vi2d pos);

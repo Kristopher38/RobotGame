@@ -26,7 +26,7 @@ private:
 
 
     std::vector<std::shared_ptr<Block>> blocks;
-    std::vector<std::shared_ptr<Block>> inventory;
+    std::vector<std::pair<int, std::shared_ptr<Block>>> inventory;
     olc::vi2d gridSize = {16, 9};
     olc::vi2d infoMenuPos;
     const olc::vi2d infoMenuSize = {200, 800};
@@ -76,6 +76,7 @@ public:
     olc::vi2d GetGridAt(olc::vi2d pos);
     Block* GetBlockUnderMouse();
     Block* GetBlockUnderMouseInv();
+    void IncrInvCount(const Block* schema, int count);
     bool CursorCollide(olc::vi2d pos, olc::vi2d size, olc::vi2d mousepos);
     void ClearLayers();
     void DrawBlock(Block* block);
@@ -85,6 +86,7 @@ public:
     void ShowDebugWindow();
     void PlaceBlock(std::shared_ptr<Block> block);
     void RemoveBlock(Block* block);
+    int InvCount(const Block* schema);
     olc::vi2d GetBlockCenter(Block* block);
     void DrawConnections();
     void SelectBlock(Block* block);

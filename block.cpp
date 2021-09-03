@@ -29,6 +29,7 @@ Block::Block(const Block& other)
     this->img = other.img;
     this->size = other.size;
     this->pos = other.pos;
+    this->schema = &other;
     for (auto port : other.ports)
     {
         auto newPort = std::shared_ptr<IPort>(port.second->Clone());

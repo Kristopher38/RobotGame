@@ -29,9 +29,9 @@ bool RobotGame::OnUserCreate()
 
     this->sm.LoadAll();
 
-    inventory.push_back(std::make_shared<ProgrammableBlock>(&sm, olc::vi2d{0, 0}, std::vector<std::string>{"input_1"}, std::vector<std::string>{"output_1"}));
-    inventory.push_back(std::make_shared<ButtonBlock>(&sm, olc::vi2d{0, 0}));
-    inventory.push_back(std::make_shared<DiodeBlock>(&sm, olc::vi2d{0, 0}));
+    inventory.push_back({2, std::make_shared<ProgrammableBlock>(&sm, olc::vi2d{0, 0}, std::vector<std::string>{"input_1"}, std::vector<std::string>{"output_1"})});
+    inventory.push_back({5, std::make_shared<ButtonBlock>(&sm, olc::vi2d{0, 0})});
+    inventory.push_back({3, std::make_shared<DiodeBlock>(&sm, olc::vi2d{0, 0})});
     return true;
 }
 
@@ -240,6 +240,31 @@ void RobotGame::PlaceBlock(std::shared_ptr<Block> block)
     this->blocks.push_back(block);
 }
 
+int RobotGame::InvCount(const Block* schema)
+{
+    for (auto block = this->inventory.begin(); block != this->inventory.end(); ++block)
+    {
+        if (block->second.get() == schema)
+        {
+            return block->first;
+        }
+    }
+}
+
+void RobotGame::IncrInvCount(const Block* schema, int count)
+{
+    for (auto block = this->inventory.begin(); block != this->inventory.end(); ++block)
+    {
+        if (block->second.get() == schema)
+        {
+            block->first += count;
+            assert(block->first >= 0);
+            break;
+        }
+    }
+}
+
+
 void RobotGame::RemoveBlock(Block* other)
 {
     for (auto block = this->blocks.begin(); block != this->blocks.end(); ++block)
@@ -260,9 +285,9 @@ Block* RobotGame::GetBlockUnderMouseInv()
     int posx = 0;
     for (auto block : inventory)
     {
-        if (this->CursorCollide({posx, this->blocksMenuPos.y}, block->size * blocksize, this->GetMousePos()))
-            return block.get();
-        posx += block->size.x * blocksize + uiPadding;
+        if (this->CursorCollide({posx, this->blocksMenuPos.y}, block.second->size * blocksize, this->GetMousePos()))
+            return block.second.get();
+        posx += block.second->size.x * blocksize + uiPadding;
     }
     return nullptr;
 }
@@ -275,8 +300,9 @@ void RobotGame::DrawBlocksUI()
     int posx = 0;
     for (auto block : inventory)
     {
-        this->DrawBlockSprite({posx, this->blocksMenuPos.y}, block.get());
-        posx += block->size.x * blocksize + uiPadding;
+        this->DrawBlockSprite({posx, this->blocksMenuPos.y}, block.second.get());
+        this->DrawString(posx, this->blocksMenuPos.y + block.second->size.y * blocksize, std::to_string(block.first), block.first > 0 ? olc::WHITE : olc::RED, 3);
+        posx += block.second->size.x * blocksize + uiPadding;
     }
 }
 
