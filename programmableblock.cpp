@@ -1,20 +1,20 @@
 #include "programmableblock.h"
 
-ProgrammableBlock::ProgrammableBlock(SpriteManager* sm, olc::vi2d pos) : Block(sm, pos, {1, 1}), running(false), timedelta(0.0)
+ProgrammableBlock::ProgrammableBlock(SpriteManager* sm, olc::vi2d pos) : Block(sm, pos, {1, 1}), running(false)
 {
     this->toYield = this->warmupTime;
     this->SetSprite("code_block");
     this->InitLua();
 }
 
-ProgrammableBlock::ProgrammableBlock(SpriteManager* sm, olc::vi2d pos, int inputPorts, int outputPorts) : Block(sm, pos, {1, 1}, inputPorts, outputPorts), running(false), timedelta(0.0)
+ProgrammableBlock::ProgrammableBlock(SpriteManager* sm, olc::vi2d pos, int inputPorts, int outputPorts) : Block(sm, pos, {1, 1}, inputPorts, outputPorts), running(false)
 {
     this->toYield = this->warmupTime;
     this->SetSprite("code_block");
     this->InitLua();
 }
 
-ProgrammableBlock::ProgrammableBlock(SpriteManager* sm, olc::vi2d pos, std::vector<std::string> inputPorts, std::vector<std::string> outputPorts) : Block(sm, pos, {1, 1}, inputPorts, outputPorts), running(false), timedelta(0.0)
+ProgrammableBlock::ProgrammableBlock(SpriteManager* sm, olc::vi2d pos, std::vector<std::string> inputPorts, std::vector<std::string> outputPorts) : Block(sm, pos, {1, 1}, inputPorts, outputPorts), running(false)
 {
     this->toYield = this->warmupTime;
     this->SetSprite("code_block");
@@ -24,7 +24,6 @@ ProgrammableBlock::ProgrammableBlock(SpriteManager* sm, olc::vi2d pos, std::vect
 ProgrammableBlock::ProgrammableBlock(const ProgrammableBlock& other) : Block(other)
 {
     this->toYield = this->warmupTime;
-    this->timedelta = 0.0f;
     this->code = other.code;
     this->running = false;
     this->InitLua();
@@ -46,6 +45,11 @@ std::string ProgrammableBlock::GetDescription()
            "from other components (e.g. buttons) and produce outputs which can be sent for "
            "further processing to another programmable blocks or connect to other components "
            "to control them.";
+}
+
+olc::Sprite* ProgrammableBlock::GetDefaultSprite()
+{
+    return this->sm->GetSprite("code_block").get();
 }
 
 ProgrammableBlock* ProgrammableBlock::Clone()
@@ -100,7 +104,7 @@ void ProgrammableBlock::InitLua()
 
     // setup hook function
     *(ProgrammableBlock**)lua_getextraspace(this->L) = this;
-    lua_sethook(this->L, luaHook, LUA_MASKCOUNT, 10000);
+    lua_sethook(this->L, luaHook, LUA_MASKCOUNT, this->hookInstrCount);
 }
 
 void ProgrammableBlock::SetupLuaPorts()
@@ -137,9 +141,7 @@ bool ProgrammableBlock::RunSetup()
 
 bool ProgrammableBlock::RunUpdate()
 {
-    int type = lua_getglobal(this->L, "update");
-    std::cout<<lua_typename(this->L, type)<<std::endl;
-    if (type != LUA_TFUNCTION)
+    if (lua_getglobal(this->L, "update") != LUA_TFUNCTION)
     {
         lua_pop(this->L, 1);
         this->lastError = "Missing 'update' method";
@@ -180,9 +182,13 @@ std::string ProgrammableBlock::GetError()
 
 void ProgrammableBlock::Start()
 {
+    if (!this->VerifyCode())
+        return;
     this->running = true;
+    this->prevTime = std::chrono::steady_clock::now();
     this->toYield = this->warmupTime;
     this->RunSetup();
+    this->toYield = this->yieldTime;
 }
 
 void ProgrammableBlock::Stop()
@@ -237,9 +243,24 @@ DataValue ProgrammableBlock::GetDataValue(int index)
 bool ProgrammableBlock::UpdateYieldTimer()
 {
     auto now = std::chrono::steady_clock::now();
+    this->toYield -= now - this->prevTime;
+    this->prevTime = now;
 
-    this->toYield -= this->timedelta;
-    return toYield < 0.0;
+    if (this->toYield <= std::chrono::duration<int64_t, std::nano>::zero())
+    {
+        this->toYield = this->yieldTime;
+        return false;
+    }
+    return true;
+}
+
+void ProgrammableBlock::DisplayError()
+{
+    ImGui::SetNextWindowSizeConstraints({200, 60}, {300, 150});
+    ImGui::SetNextWindowPos({this->pos.x * 64, this->pos.y * 64});
+    ImGui::Begin(("Error##" + std::to_string((intptr_t)this)).c_str(), NULL, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_Tooltip);
+    ImGui::TextWrapped(this->GetError().c_str());
+    ImGui::End();
 }
 
 void ProgrammableBlock::Update(float timedelta)
@@ -249,11 +270,7 @@ void ProgrammableBlock::Update(float timedelta)
     if (this->running)
     {
         if (!this->RunUpdate())
-        {
-            ImGui::Begin("Debug");
-            ImGui::Text(this->GetError().c_str());
-            ImGui::End();
-        }
+            this->DisplayError();
         else
         {
             if (lua_getglobal(this->L, "ports") != LUA_TTABLE)
@@ -283,9 +300,5 @@ void ProgrammableBlock::Update(float timedelta)
         }
     }
     else
-    {
-        ImGui::Begin("Debug");
-        ImGui::Text(this->GetError().c_str());
-        ImGui::End();
-    }
+        this->DisplayError();
 }

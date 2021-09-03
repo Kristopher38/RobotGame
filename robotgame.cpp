@@ -141,8 +141,8 @@ void RobotGame::DrawInfoUI()
 
     if (this->selectedBlock)
     {
-        olc::Sprite* sprite = this->selectedBlock->GetSprite();
-        this->DrawBlockSprite(this->infoMenuPos + olc::vi2d{uiPadding, 0}, this->selectedBlock);
+        olc::Sprite* sprite = this->selectedBlock->GetDefaultSprite();
+        this->DrawSprite(this->infoMenuPos + olc::vi2d{uiPadding, 0}, sprite, spritescale);
 
         olc::vi2d pos = this->infoMenuPos;
         pos.y += sprite->height * spritescale;
@@ -238,6 +238,21 @@ olc::vi2d RobotGame::GetResolution()
 void RobotGame::PlaceBlock(std::shared_ptr<Block> block)
 {
     this->blocks.push_back(block);
+}
+
+void RobotGame::RemoveBlock(Block* other)
+{
+    for (auto block = this->blocks.begin(); block != this->blocks.end(); ++block)
+    {
+        if (block->get() == other)
+        {
+            if (other == this->selectedBlock)
+                this->selectedBlock = nullptr;
+            this->blocks.erase(block);
+            break;
+        }
+    }
+    //std::remove(this->blocks.begin(), this->blocks.end(), block);
 }
 
 Block* RobotGame::GetBlockUnderMouseInv()

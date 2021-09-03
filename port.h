@@ -46,6 +46,16 @@ public:
         connections.erase(port);
         port->connections.erase(this);
     }
+    virtual bool CanConnect(IPort* port = nullptr)
+    {
+        if (!port)
+            return this->IsOutput() ||
+                   this->IsInput() && this->connections.size() == 0;
+        else
+            return this->GetType() != port->GetType() &&
+                   (this->IsInput() && this->connections.size() == 0 ||
+                    port->IsInput() && port->connections.size() == 0);
+    }
     virtual void Update(DataValue newData)
     {
         this->nextData = newData;

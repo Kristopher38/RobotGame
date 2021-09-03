@@ -47,6 +47,21 @@ olc::Sprite* Block::GetSprite()
     return this->img.get();
 }
 
+olc::Sprite* Block::GetDefaultSprite()
+{
+    return this->sm->GetSprite("default_block").get();
+}
+
+std::string Block::GetPortName(IPort* other)
+{
+    for (auto port : this->ports)
+    {
+        if (port.second.get() == other)
+            return port.first;
+    }
+    return std::string();
+}
+
 std::string Block::GetDescription()
 {
     return "Generic block";

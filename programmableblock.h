@@ -16,16 +16,18 @@ private:
     std::string PopString();
     DataValue GetDataValue(int index);
     void PushDataValue(DataValue data);
+    void DisplayError();
 
     lua_State* L;
     std::string lastError;
     bool running;
 
     // lua execution timing restrictions
-    double timedelta;
-    double toYield;
-    const double yieldTime = 0.05; // 50ms
-    const double warmupTime = 0.3; // 300ms
+    std::chrono::time_point<std::chrono::steady_clock> prevTime;
+    std::chrono::duration<int64_t, std::nano> toYield;
+    const std::chrono::milliseconds yieldTime{50};
+    const std::chrono::milliseconds warmupTime{300};
+    const int hookInstrCount = 100000;
 public:
 	std::string code;
 
@@ -37,6 +39,7 @@ public:
 
     virtual bool IsProgrammable();
     virtual std::string GetDescription();
+    virtual olc::Sprite* GetDefaultSprite();
     virtual ProgrammableBlock* Clone();
 
     bool RunSetup();

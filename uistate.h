@@ -27,6 +27,7 @@ namespace UIState
 
         IOSelectState(Block* target, olc::vi2d mousepos) : target(target), mousepos(mousepos) {}
         virtual std::unique_ptr<IState> HandleInput(RobotGame* game);
+        void OnExit(RobotGame* game);
     };
 
     class DraggingState : public IState

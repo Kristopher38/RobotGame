@@ -44,7 +44,8 @@ public:
     const int blocksize = spritesize * spritescale;     // one grid unit rendered size
 
     const ImGuiWindowFlags codeEditFlags = ImGuiWindowFlags_NoCollapse |
-                                           ImGuiWindowFlags_NoNav;
+                                           ImGuiWindowFlags_NoNav |
+                                           ImGuiWindowFlags_NoScrollWithMouse;
 
     const ImGuiWindowFlags popUpMenuFlags = ImGuiWindowFlags_NoTitleBar |
                                             ImGuiWindowFlags_NoScrollbar |
@@ -83,6 +84,7 @@ public:
     void DrawBlocksUI();
     void ShowDebugWindow();
     void PlaceBlock(std::shared_ptr<Block> block);
+    void RemoveBlock(Block* block);
     olc::vi2d GetBlockCenter(Block* block);
     void DrawConnections();
     void SelectBlock(Block* block);

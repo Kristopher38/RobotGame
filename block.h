@@ -13,8 +13,10 @@ class RobotGame;
 class Block
 {
 private:
-    SpriteManager* sm;
     std::shared_ptr<olc::Sprite> img;
+
+protected:
+    SpriteManager* sm;
 
 public:
     std::map<std::string, std::shared_ptr<IPort>> ports;
@@ -30,8 +32,10 @@ public:
 
     void SetSprite(std::string sprite);
     olc::Sprite* GetSprite();
+    std::string GetPortName(IPort* port);
 
     virtual std::string GetDescription();
+    virtual olc::Sprite* GetDefaultSprite();
     virtual bool IsProgrammable();
     virtual Block* Clone();
     virtual void HandleInput(bool isPointedAt, InputState* input) {}

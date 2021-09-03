@@ -51,37 +51,68 @@ std::unique_ptr<IState> UIState::DraggingState::HandleInput(RobotGame* game)
 
 std::unique_ptr<IState> UIState::IOSelectState::HandleInput(RobotGame* game)
 {
-    ImGui::SetNextWindowSize({120, 200});
+    ImGui::SetNextWindowSize({180, 200});
     ImGui::SetNextWindowPos({this->mousepos.x, this->mousepos.y});
     ImGui::Begin("IO", NULL, game->popUpMenuFlags);
 
     if (!ImGui::IsWindowFocused())
+        return std::make_unique<UIState::EditIdleState>();
+
+    ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
+    auto ports = &this->target->ports;
+    static int openNode = -1;
+    int idx = 0;
+    for (auto it = ports->begin(); it != ports->end(); ++it, ++idx)
     {
-        ImGui::End();
+        bool open = ImGui::TreeNodeEx(std::to_string(idx).c_str(), flags, it->first.c_str());
+        bool link = false;
+        if (it->second->CanConnect())
+        {
+            ImGui::SameLine(0.0f, 15.0f);
+            link = ImGui::SmallButton(("Link##" + std::to_string(idx)).c_str());
+        }
+
+        if (open)
+            openNode = idx;
+
+        if (open && idx == openNode)
+        {
+            auto conns = it->second->connections;
+            for (auto conn = conns.begin(); conn != conns.end();)
+            {
+                if ((*conn)->owner)
+                {
+                    ImGui::BulletText((*conn)->owner->GetPortName(*conn).c_str());
+                    ImGui::SameLine();
+                    if (ImGui::SmallButton(("X##" + std::to_string(idx)).c_str()))
+                        it->second->Disconnect(*conn);
+                    else
+                        ++conn;
+                }
+            }
+
+            ImGui::TreePop();
+        }
+        if (link)
+            return std::make_unique<UIState::LinkingState>(this->target, it->second.get());
+    }
+
+    if (this->target->IsProgrammable() && ImGui::Button("Edit code", {80, 30}))
+        return std::make_unique<UIState::CodeEditState>(dynamic_cast<ProgrammableBlock*>(this->target));
+
+    if (ImGui::Button("Remove", {80, 30}))
+    {
+        game->RemoveBlock(this->target);
         return std::make_unique<UIState::EditIdleState>();
     }
 
-    int output = 0;
-    int input = 0;
-    auto ports = &this->target->ports;
-    for (auto it = ports->begin(); it != ports->end(); ++it)
-    {
-        int idx = it->second->GetType() == PortType::INPUT ? ++output : ++input;
-        if (ImGui::Selectable((it->first + "##" + std::to_string(idx++)).c_str()))
-        {
-            ImGui::End();
-            return std::make_unique<UIState::LinkingState>(this->target, it->second.get());
-        }
-    }
-    if (this->target->IsProgrammable() && ImGui::Button("Edit code", {80, 30}))
-    {
-        ImGui::End();
-        return std::make_unique<UIState::CodeEditState>(dynamic_cast<ProgrammableBlock*>(this->target));
-    }
-
     ImGui::End();
-
     return nullptr;
+}
+
+void UIState::IOSelectState::OnExit(RobotGame* game)
+{
+    ImGui::End();
 }
 
 std::unique_ptr<IState> UIState::LinkingState::HandleInput(RobotGame* game)
@@ -117,7 +148,7 @@ std::unique_ptr<IState> UIState::IOSelectSecondState::HandleInput(RobotGame* gam
     auto ports = &this->target->ports;
     for (auto it = ports->begin(); it != ports->end(); ++it)
     {
-        if (it->second->GetType() != this->sourcePort->GetType())
+        if (this->sourcePort->CanConnect(it->second.get()))
         {
             if (ImGui::Selectable((it->first + "##" + std::to_string(idx++)).c_str()))
             {
@@ -127,7 +158,7 @@ std::unique_ptr<IState> UIState::IOSelectSecondState::HandleInput(RobotGame* gam
             }
         }
         else
-            ImGui::Selectable((it->second->GetTypeStr() + std::to_string(++idx)).c_str(), false, ImGuiSelectableFlags_Disabled);
+            ImGui::Selectable((it->first.c_str()), false, ImGuiSelectableFlags_Disabled);
     }
 
     ImGui::End();
@@ -137,18 +168,17 @@ std::unique_ptr<IState> UIState::IOSelectSecondState::HandleInput(RobotGame* gam
 
 std::unique_ptr<IState> UIState::CodeEditState::HandleInput(RobotGame* game)
 {
-    static ImVec2 size{300, 200};
-    static ImVec2 pos{32, 32};
     static bool open = true;
-    //ImGui::SetNextWindowSize({300, 200});
-    //ImGui::SetNextWindowPos({0, 0});
+    ImGui::SetNextWindowSizeConstraints({300, 200}, {800, 600});
     if (open)
     {
         if (ImGui::Begin("Code Editor", &open, game->codeEditFlags))
         {
-            ImGui::InputTextMultiline("##code", &this->target->code, {300, 400}, ImGuiInputTextFlags_AllowTabInput);
+            ImVec2 textInputSize = ImGui::GetContentRegionAvail();
+            textInputSize.y = -40;
+            ImGui::InputTextMultiline("##code", &this->target->code, textInputSize, ImGuiInputTextFlags_AllowTabInput);
             if (!this->target->VerifyCode())
-                ImGui::Text(this->target->GetError().c_str());
+                ImGui::TextWrapped(this->target->GetError().c_str());
         }
         ImGui::End();
         return nullptr;

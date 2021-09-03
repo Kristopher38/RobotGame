@@ -11,8 +11,9 @@ public:
 	DiodeBlock(SpriteManager* sm, olc::vi2d pos) : Block(sm, pos, {1, 1}, {"diode_val"}, {}), state(false) { this->SetSprite("diode_off"); }
 	DiodeBlock(const DiodeBlock& other);
 
-	std::string GetDescription();
-	DiodeBlock* Clone();
+    virtual std::string GetDescription();
+    virtual olc::Sprite* GetDefaultSprite();
+    virtual DiodeBlock* Clone();
 
     virtual void HandleInput(bool isPointedAt, InputState* input);
     virtual void Update(float timedelta);
