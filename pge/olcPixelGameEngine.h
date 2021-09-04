@@ -4591,6 +4591,13 @@ namespace olc
 			XMapWindow(olc_Display, olc_Window);
 			XStoreName(olc_Display, olc_Window, "OneLoneCoder.com - Pixel Game Engine");
 
+			sh = XAllocSizeHints();
+			sh->flags = PMinSize | PMaxSize;
+			sh->min_width = sh->max_width = 1024;
+			sh->min_height = sh->max_height = 800;
+			XSetWMSizeHints(olc_Display, olc_Window, sh, XA_WM_NORMAL_HINTS);
+			XFree(sh);
+
 			if (bFullScreen) // Thanks DragonEye, again :D
 			{
 				Atom wm_state;

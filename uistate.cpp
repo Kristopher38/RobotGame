@@ -36,9 +36,6 @@ std::unique_ptr<IState> UIState::DraggingState::HandleInput(RobotGame* game)
     olc::HWButton lmb = game->GetMouse(olc::Mouse::LEFT);
     if (lmb.bHeld)
     {
-        ImGui::Begin("Debug");
-        ImGui::Text("%d %d", this->handlepos.x, this->handlepos.y);
-        ImGui::End();
         olc::vi2d pos = game->GetMousePos();
         olc::vi2d gridpos = game->GetGridAt(pos);
         if (game->CanBePlaced(this->target, gridpos - this->handlepos))

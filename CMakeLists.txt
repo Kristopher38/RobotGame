@@ -2,7 +2,9 @@ cmake_minimum_required(VERSION 2.8)
 
 project(robotgame)
 
-link_directories("C:\\Libraries\\include\\lua")
+if (WIN32)
+	link_directories("C:\\Libraries\\include\\lua")
+endif (WIN32)
 
 macro(print_all_variables)
 	message(STATUS "print_all_variables------------------------------------------{")
@@ -15,9 +17,8 @@ endmacro()
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-static-libstdc++")
 if (UNIX)
-	set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-lX11 -lGL -lpthread -lpng -lstdc++fs -llua53")
+	set(CMAKE_CXX_FLAGS "-lX11 -lGL -lpthread -lpng -lstdc++fs -llua5.3")
 endif (UNIX)
 
 add_executable(${PROJECT_NAME}
@@ -42,6 +43,7 @@ add_executable(${PROJECT_NAME}
 	"pge/imgui_stdlib.cpp")
 
 if (WIN32)
+	set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-static-libstdc++")
 	target_link_libraries(${PROJECT_NAME} user32.lib)
 	target_link_libraries(${PROJECT_NAME} gdi32.lib)
 	target_link_libraries(${PROJECT_NAME} opengl32.lib)
@@ -51,5 +53,5 @@ if (WIN32)
 	target_link_libraries(${PROJECT_NAME} liblua.a)
 endif (WIN32)
 
-print_all_variables()
+#print_all_variables()
 
