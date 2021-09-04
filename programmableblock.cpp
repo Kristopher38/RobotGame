@@ -1,18 +1,18 @@
 #include "programmableblock.h"
 
-ProgrammableBlock::ProgrammableBlock(SpriteManager* sm, olc::vi2d pos) : Block(sm, pos, {1, 1}), running(false)
+ProgrammableBlock::ProgrammableBlock(SpriteManager* sm, olc::vi2d pos) : Block(sm, pos, {1, 1}), running(false), code(defaultCode)
 {
     this->toYield = this->warmupTime;
     this->SetSprite("code_block");
 }
 
-ProgrammableBlock::ProgrammableBlock(SpriteManager* sm, olc::vi2d pos, int inputPorts, int outputPorts) : Block(sm, pos, {1, 1}, inputPorts, outputPorts), running(false)
+ProgrammableBlock::ProgrammableBlock(SpriteManager* sm, olc::vi2d pos, int inputPorts, int outputPorts) : Block(sm, pos, {1, 1}, inputPorts, outputPorts), running(false), code(defaultCode)
 {
     this->toYield = this->warmupTime;
     this->SetSprite("code_block");
 }
 
-ProgrammableBlock::ProgrammableBlock(SpriteManager* sm, olc::vi2d pos, std::vector<std::string> inputPorts, std::vector<std::string> outputPorts) : Block(sm, pos, {1, 1}, inputPorts, outputPorts), running(false)
+ProgrammableBlock::ProgrammableBlock(SpriteManager* sm, olc::vi2d pos, std::vector<std::string> inputPorts, std::vector<std::string> outputPorts) : Block(sm, pos, {1, 1}, inputPorts, outputPorts), running(false), code(defaultCode)
 {
     this->toYield = this->warmupTime;
     this->SetSprite("code_block");
@@ -26,10 +26,7 @@ ProgrammableBlock::ProgrammableBlock(const ProgrammableBlock& other) : Block(oth
 }
 
 ProgrammableBlock::~ProgrammableBlock()
-{
-    if (this->L)
-        lua_close(this->L);
-}
+{}
 
 bool ProgrammableBlock::IsProgrammable()
 {
@@ -44,9 +41,9 @@ std::string ProgrammableBlock::GetDescription()
            "to control them.";
 }
 
-olc::Sprite* ProgrammableBlock::GetDefaultSprite()
+std::shared_ptr<olc::Sprite> ProgrammableBlock::GetDefaultSprite()
 {
-    return this->sm->GetSprite("code_block").get();
+    return this->sm->GetSprite("code_block");
 }
 
 ProgrammableBlock* ProgrammableBlock::Clone()
@@ -96,6 +93,17 @@ void ProgrammableBlock::InitLua()
     lua_pushcfunction(this->L, luaPrint);
     lua_setglobal(this->L, "print");
 
+    // setup colors global
+    lua_newtable(this->L);
+    for (int i = 0; i < this->colors.size(); ++i)
+    {
+        lua_pushstring(this->L, this->colors[i].c_str());
+        lua_pushinteger(this->L, i);
+        lua_settable(this->L, -3);
+    }
+    lua_setglobal(this->L, "color");
+    lua_pop(this->L, 1);
+
     // setup 'ports' global
     this->SetupLuaPorts();
 
@@ -136,8 +144,15 @@ bool ProgrammableBlock::RunSetup()
     }
 }
 
+void ProgrammableBlock::ResetYieldTimer(std::chrono::milliseconds t)
+{
+    this->prevTime = std::chrono::steady_clock::now();
+    this->toYield = t;
+}
+
 bool ProgrammableBlock::RunUpdate()
 {
+    this->ResetYieldTimer(this->warmupTime);
     if (lua_getglobal(this->L, "update") != LUA_TFUNCTION)
     {
         lua_pop(this->L, 1);
@@ -183,10 +198,10 @@ void ProgrammableBlock::Start()
     if (!this->VerifyCode())
         return;
     this->running = true;
-    this->prevTime = std::chrono::steady_clock::now();
-    this->toYield = this->warmupTime;
-    this->RunSetup();
-    this->toYield = this->yieldTime;
+    this->ResetYieldTimer(this->warmupTime);
+    if (!this->RunSetup())
+        this->running = false;
+    this->ResetYieldTimer(this->yieldTime);
 }
 
 void ProgrammableBlock::Stop()
@@ -200,7 +215,7 @@ void ProgrammableBlock::SetRunning(bool val)
     this->running = val;
 }
 
-void ProgrammableBlock::PushDataValue(DataValue data)
+void ProgrammableBlock::PushDataValue(DataValueEx data)
 {
     if (std::holds_alternative<nil>(data))
         lua_pushnil(this->L);
@@ -212,29 +227,83 @@ void ProgrammableBlock::PushDataValue(DataValue data)
         lua_pushnumber(this->L, std::get<double>(data));
     else if (std::holds_alternative<std::string>(data))
         lua_pushstring(this->L, std::get<std::string>(data).c_str());
+    else if (std::holds_alternative<std::vector<DataValue>>(data))
+    {
+        std::vector<DataValue> table = std::get<std::vector<DataValue>>(data);
+        lua_createtable(this->L, table.size(), 0);
+        for (int i = 0; i < table.size(); ++i)
+        {
+            DataValue item = table[i];
+            if (std::holds_alternative<nil>(item))
+                lua_pushnil(this->L);
+            else if (std::holds_alternative<bool>(item))
+                lua_pushboolean(this->L, std::get<bool>(item));
+            else if (std::holds_alternative<int64_t>(item))
+                lua_pushinteger(this->L, std::get<int64_t>(item));
+            else if (std::holds_alternative<double>(item))
+                lua_pushnumber(this->L, std::get<double>(item));
+            else if (std::holds_alternative<std::string>(item))
+                lua_pushstring(this->L, std::get<std::string>(item).c_str());
+            else
+                assert(false);
+            lua_seti(this->L, -2, i+1);
+        }
+    }
     else
         assert(false);
 }
 
-DataValue ProgrammableBlock::GetDataValue(int index)
+DataValueEx ProgrammableBlock::GetDataValue(int index)
 {
-    DataValue data;
+    DataValueEx data;
     size_t len;
+    int tableLen;
 
     int type = lua_type(this->L, index);
     switch (type)
     {
         case LUA_TBOOLEAN:
-            data = lua_toboolean(this->L, -1);
+            data = lua_toboolean(this->L, index);
             break;
         case LUA_TNUMBER:
-            if (lua_isinteger(this->L, -1))
-                data = lua_tointeger(this->L, -1);
+            if (lua_isinteger(this->L, index))
+                data = lua_tointeger(this->L, index);
             else
-                data = lua_tonumber(this->L, -1);
+                data = lua_tonumber(this->L, index);
             break;
         case LUA_TSTRING:
-            data = std::string(lua_tolstring(this->L, -1, &len), len);
+            data = std::string(lua_tolstring(this->L, index, &len), len);
+            break;
+        case LUA_TTABLE:
+            data = std::vector<DataValue>();
+            lua_len(this->L, index);
+            tableLen = lua_tointeger(this->L, -1);
+            lua_pop(this->L, 1);
+            for (int i = 0; i < tableLen; ++i)
+            {
+                lua_geti(this->L, index, i+1);
+                int type = lua_type(this->L, index);
+                switch (type)
+                {
+                    case LUA_TBOOLEAN:
+                        std::get<std::vector<DataValue>>(data).emplace_back(lua_toboolean(this->L, index));
+                        break;
+                    case LUA_TNUMBER:
+                        if (lua_isinteger(this->L, index))
+                            std::get<std::vector<DataValue>>(data).emplace_back(lua_tointeger(this->L, index));
+                        else
+                            std::get<std::vector<DataValue>>(data).emplace_back(lua_tonumber(this->L, index));
+                        break;
+                    case LUA_TSTRING:
+                        std::get<std::vector<DataValue>>(data).emplace_back(std::string(lua_tolstring(this->L, index, &len), len));
+                        break;
+                    case LUA_TNIL:
+                    default:
+                        std::get<std::vector<DataValue>>(data).emplace_back(nil());
+                        break;
+                }
+                lua_pop(this->L, 1);
+            }
             break;
         case LUA_TNIL:
         default:

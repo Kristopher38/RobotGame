@@ -11,9 +11,9 @@ std::string ButtonBlock::GetDescription()
     return "Button block. Returns 0 or 1 on its output depending on whether it's being pressed or not";
 }
 
-olc::Sprite* ButtonBlock::GetDefaultSprite()
+std::shared_ptr<olc::Sprite> ButtonBlock::GetDefaultSprite()
 {
-    return this->sm->GetSprite("button").get();
+    return this->sm->GetSprite("button");
 }
 
 ButtonBlock* ButtonBlock::Clone()

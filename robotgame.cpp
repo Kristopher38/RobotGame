@@ -3,10 +3,12 @@
 
 #include "robotgame.h"
 #include <iostream>
-RobotGame::RobotGame() : pge_imgui(true)
+
+RobotGame::RobotGame() : pge_imgui(true), map(), robot(&map, &sm, {0, 0}, SIDE::UP)
 {
     this->sAppName = "Robot game";
     this->state = std::make_unique<UIState::EditIdleState>();
+    this->map.Load();
 }
 
 bool RobotGame::OnUserCreate()
@@ -29,9 +31,11 @@ bool RobotGame::OnUserCreate()
 
     this->sm.LoadAll();
 
-    inventory.push_back({2, std::make_shared<ProgrammableBlock>(&sm, olc::vi2d{0, 0}, std::vector<std::string>{"input_1"}, std::vector<std::string>{"output_1"})});
+    inventory.push_back({2, std::make_shared<ProgrammableBlock>(&sm, olc::vi2d{0, 0}, std::vector<std::string>{"input1", "input2", "input3"}, std::vector<std::string>{"output1", "output2", "output3"})});
     inventory.push_back({5, std::make_shared<ButtonBlock>(&sm, olc::vi2d{0, 0})});
     inventory.push_back({3, std::make_shared<DiodeBlock>(&sm, olc::vi2d{0, 0})});
+    //inventory.push_back({1, std::make_shared<MotorBlock>(&sm, &robot, olc::vi2d{0, 0})});
+    inventory.push_back({1, std::make_shared<MapBlock>(&sm, olc::vi2d{0, 0})});
     return true;
 }
 
@@ -92,9 +96,11 @@ void RobotGame::DrawBlock(Block* block)
     this->DrawBlockSprite(block->pos * blocksize, block);
 }
 
-void RobotGame::DrawBlockSprite(olc::vi2d pos, Block* block)
+void RobotGame::DrawBlockSprite(olc::vi2d pos, Block* block, int scale)
 {
-    this->DrawSprite(pos, block->GetSprite(), spritescale);
+    if (scale < 0)
+        scale = this->spritescale;
+    this->DrawSprite(pos, block->GetSprite(), scale);
 }
 
 void RobotGame::SelectBlock(Block* block)
@@ -141,11 +147,14 @@ void RobotGame::DrawInfoUI()
 
     if (this->selectedBlock)
     {
-        olc::Sprite* sprite = this->selectedBlock->GetDefaultSprite();
-        this->DrawSprite(this->infoMenuPos + olc::vi2d{uiPadding, 0}, sprite, spritescale);
+        int scale = spritescale;
+        olc::Sprite* sprite = this->selectedBlock->GetDefaultSprite().get();
+        if (this->selectedBlock->size.x > 2 || this->selectedBlock->size.y > 2)
+            scale /= 2;
+        this->DrawSprite(this->infoMenuPos + olc::vi2d{uiPadding, 0}, sprite, scale);
 
         olc::vi2d pos = this->infoMenuPos;
-        pos.y += sprite->height * spritescale;
+        pos.y += sprite->height * scale;
         olc::vi2d size = this->GetWindowSize() - pos;
         ImGui::SetNextWindowPos({pos.x, pos.y});
         ImGui::SetNextWindowSize({size.x, size.y});
@@ -249,6 +258,7 @@ int RobotGame::InvCount(const Block* schema)
             return block->first;
         }
     }
+    return 0;
 }
 
 void RobotGame::IncrInvCount(const Block* schema, int count)
@@ -298,11 +308,14 @@ void RobotGame::DrawBlocksUI()
     this->blocksMenuPos = {0, this->gridSize.y * blocksize};
 
     int posx = 0;
-    for (auto block : inventory)
+    for (const auto& [count, block] : inventory)
     {
-        this->DrawBlockSprite({posx, this->blocksMenuPos.y}, block.second.get());
-        this->DrawString(posx, this->blocksMenuPos.y + block.second->size.y * blocksize, std::to_string(block.first), block.first > 0 ? olc::WHITE : olc::RED, 3);
-        posx += block.second->size.x * blocksize + uiPadding;
+        int scale = spritescale;
+        if (block->size.x > 2 || block->size.y > 2)
+            scale /= 2;
+        this->DrawBlockSprite({posx, this->blocksMenuPos.y}, block.get(), scale);
+        this->DrawString(posx, this->blocksMenuPos.y + block->size.y * spritesize * scale, std::to_string(count), count > 0 ? olc::WHITE : olc::RED, 3);
+        posx += block->size.x * spritesize * scale + uiPadding;
     }
 }
 
@@ -340,8 +353,8 @@ bool RobotGame::OnUserUpdate(float fElapsedTime)
     this->DrawConnections();
     this->DrawBlocks();
 
-    ImGui::ShowDemoWindow();
-    this->ShowDebugWindow();
+    //ImGui::ShowDemoWindow();
+    //this->ShowDebugWindow();
 
     return true;
 }

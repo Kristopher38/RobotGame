@@ -13,8 +13,12 @@
 #include "programmableblock.h"
 #include "buttonblock.h"
 #include "diodeblock.h"
+#include "motorblock.h"
+#include "mapblock.h"
 #include "uistate.h"
 #include "inputstate.h"
+#include "map.h"
+#include "robot.h"
 
 class IState;
 
@@ -23,7 +27,8 @@ class RobotGame : public olc::PixelGameEngine
 
 private:
     olc::imgui::PGE_ImGUI pge_imgui;
-
+    Map map;
+    Robot robot;
 
     std::vector<std::shared_ptr<Block>> blocks;
     std::vector<std::pair<int, std::shared_ptr<Block>>> inventory;
@@ -80,7 +85,7 @@ public:
     bool CursorCollide(olc::vi2d pos, olc::vi2d size, olc::vi2d mousepos);
     void ClearLayers();
     void DrawBlock(Block* block);
-    void DrawBlockSprite(olc::vi2d pos, Block* block);
+    void DrawBlockSprite(olc::vi2d pos, Block* block, int scale = -1);
     void DrawBlocks();
     void DrawBlocksUI();
     void ShowDebugWindow();

@@ -2,9 +2,9 @@
 
 Block::Block(SpriteManager* sm, olc::vi2d pos) : Block(sm, pos, {1, 1}) {}
 
-Block::Block(SpriteManager* sm, olc::vi2d pos, olc::vi2d size) : sm(sm), pos(pos), size(size)
+Block::Block(SpriteManager* sm, olc::vi2d pos, olc::vi2d size) : sm(sm), pos(pos), size(size), schema(nullptr)
 {
-    this->SetSprite("default_block");
+    this->SetSprite(this->GetDefaultSprite());
 }
 
 Block::Block(SpriteManager* sm, olc::vi2d pos, olc::vi2d size, int inputPorts, int outputPorts) : Block(sm, pos, size)
@@ -15,7 +15,7 @@ Block::Block(SpriteManager* sm, olc::vi2d pos, olc::vi2d size, int inputPorts, i
         this->ports["Output " + std::to_string(i)] = std::make_shared<OutputPort>(this);
 }
 
-Block::Block(SpriteManager* sm, olc::vi2d pos, olc::vi2d size, std::vector<std::string> inputPorts, std::vector<std::string> outputPorts) : sm(sm), pos(pos), size(size)
+Block::Block(SpriteManager* sm, olc::vi2d pos, olc::vi2d size, std::vector<std::string> inputPorts, std::vector<std::string> outputPorts) : Block(sm, pos, size)
 {
     for (auto port : inputPorts)
         this->ports[port] = std::make_shared<InputPort>(this);
@@ -29,7 +29,7 @@ Block::Block(const Block& other)
     this->img = other.img;
     this->size = other.size;
     this->pos = other.pos;
-    this->schema = &other;
+    this->schema = other.schema ? other.schema : &other;
     for (auto port : other.ports)
     {
         auto newPort = std::shared_ptr<IPort>(port.second->Clone());
@@ -43,14 +43,19 @@ void Block::SetSprite(std::string name)
     this->img = sm->GetSprite(name);
 }
 
+void Block::SetSprite(std::shared_ptr<olc::Sprite> sprite)
+{
+    this->img = sprite;
+}
+
 olc::Sprite* Block::GetSprite()
 {
     return this->img.get();
 }
 
-olc::Sprite* Block::GetDefaultSprite()
+std::shared_ptr<olc::Sprite> Block::GetDefaultSprite()
 {
-    return this->sm->GetSprite("default_block").get();
+    return this->sm->GetSprite("default_block");
 }
 
 std::string Block::GetPortName(IPort* other)

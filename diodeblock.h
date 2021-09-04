@@ -12,10 +12,9 @@ public:
 	DiodeBlock(const DiodeBlock& other);
 
     virtual std::string GetDescription();
-    virtual olc::Sprite* GetDefaultSprite();
+    virtual std::shared_ptr<olc::Sprite> GetDefaultSprite();
     virtual DiodeBlock* Clone();
 
-    virtual void HandleInput(bool isPointedAt, InputState* input);
     virtual void Update(float timedelta);
     virtual void Stop();
 };

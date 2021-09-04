@@ -13,14 +13,15 @@ enum class PortType {INPUT, OUTPUT};
 typedef std::monostate nil;
 
 typedef std::variant<nil, bool, int64_t, double, std::string> DataValue;
+typedef std::variant<nil, bool, int64_t, double, std::string, std::vector<DataValue>> DataValueEx;
 
 class IPort
 {
 public:
     std::unordered_set<IPort*> connections;
     Block* owner;
-	DataValue data;
-    DataValue nextData;
+    DataValueEx data;
+    DataValueEx nextData;
 
     IPort(Block* owner) : owner(owner), data(0), nextData(0) {}
     IPort(const IPort& other)
@@ -56,11 +57,11 @@ public:
                    (this->IsInput() && this->connections.size() == 0 ||
                     port->IsInput() && port->connections.size() == 0);
     }
-    virtual void Update(DataValue newData)
+    virtual void Update(DataValueEx newData)
     {
         this->nextData = newData;
     }
-    virtual DataValue GetData()
+    virtual DataValueEx GetData()
     {
         return this->data;
     }

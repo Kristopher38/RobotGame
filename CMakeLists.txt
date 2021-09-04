@@ -4,10 +4,20 @@ project(robotgame)
 
 link_directories("C:\\Libraries\\include\\lua")
 
+macro(print_all_variables)
+	message(STATUS "print_all_variables------------------------------------------{")
+	get_cmake_property(_variableNames VARIABLES)
+	foreach (_variableName ${_variableNames})
+		message(STATUS "${_variableName}=${${_variableName}}")
+	endforeach()
+	message(STATUS "print_all_variables------------------------------------------}")
+endmacro()
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-static-libstdc++")
 if (UNIX)
-	set(CMAKE_CXX_FLAGS "-O0 -lX11 -lGL -lpthread -lpng -lstdc++fs -llua53")
+	set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-lX11 -lGL -lpthread -lpng -lstdc++fs -llua53")
 endif (UNIX)
 
 add_executable(${PROJECT_NAME}
@@ -15,10 +25,14 @@ add_executable(${PROJECT_NAME}
 	"robotgame.cpp"
 	"uistate.cpp"
 	"spritemanager.cpp"
+	"map.cpp"
+	"robot.cpp"
 	"block.cpp"
 	"programmableblock.cpp"
 	"buttonblock.cpp"
 	"diodeblock.cpp"
+	"motorblock.cpp"
+	"mapblock.cpp"
 	"pge/imgui.cpp"
 	"pge/imgui_demo.cpp"
 	"pge/imgui_draw.cpp"
@@ -37,5 +51,5 @@ if (WIN32)
 	target_link_libraries(${PROJECT_NAME} liblua.a)
 endif (WIN32)
 
-
+print_all_variables()
 

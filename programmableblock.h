@@ -14,8 +14,8 @@ private:
     void InitLua();
     void SetupLuaPorts();
     std::string PopString();
-    DataValue GetDataValue(int index);
-    void PushDataValue(DataValue data);
+    DataValueEx GetDataValue(int index);
+    void PushDataValue(DataValueEx data);
     void DisplayError();
 
     lua_State* L;
@@ -28,6 +28,27 @@ private:
     const std::chrono::milliseconds yieldTime{50};
     const std::chrono::milliseconds warmupTime{300};
     const int hookInstrCount = 100000;
+
+    const std::vector<std::string> colors = {
+        "black",
+        "blue",
+        "light_blue",
+        "violet",
+        "pink",
+        "green",
+        "light_green",
+        "orange",
+        "yellow",
+        "red",
+        "light_red",
+        "brown",
+        "light_brown",
+        "gray",
+        "light_gray",
+        "white"
+    };
+
+    const std::string defaultCode = "-- write code that runs once here\n\nfunction update()\n-- write code that runs every simulation tick here\nend";
 public:
 	std::string code;
 
@@ -39,13 +60,14 @@ public:
 
     virtual bool IsProgrammable();
     virtual std::string GetDescription();
-    virtual olc::Sprite* GetDefaultSprite();
+    virtual std::shared_ptr<olc::Sprite> GetDefaultSprite();
     virtual ProgrammableBlock* Clone();
 
     bool RunSetup();
     bool RunUpdate();
     bool VerifyCode();
     bool UpdateYieldTimer();
+    void ResetYieldTimer(std::chrono::milliseconds t);
     void SetRunning(bool val);
     std::string GetError();
     void Update(float timedelta);

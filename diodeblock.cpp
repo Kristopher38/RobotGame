@@ -11,18 +11,15 @@ std::string DiodeBlock::GetDescription()
     return "Diode block. Any non-zero value at its input turns it on, zero value turns it off.";
 }
 
-olc::Sprite* DiodeBlock::GetDefaultSprite()
+std::shared_ptr<olc::Sprite> DiodeBlock::GetDefaultSprite()
 {
-    return this->sm->GetSprite("diode_off").get();
+    return this->sm->GetSprite("diode_off");
 }
 
 DiodeBlock* DiodeBlock::Clone()
 {
     return new DiodeBlock(*this);
 }
-
-void DiodeBlock::HandleInput(bool isPointedAt, InputState* input)
-{}
 
 void DiodeBlock::Update(float timedelta)
 {
