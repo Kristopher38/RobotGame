@@ -46,6 +46,7 @@ public:
     bool RunUpdate();
     bool VerifyCode();
     bool UpdateYieldTimer();
+    void SetRunning(bool val);
     std::string GetError();
     void Update(float timedelta);
     void Start();

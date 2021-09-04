@@ -4,21 +4,18 @@ ProgrammableBlock::ProgrammableBlock(SpriteManager* sm, olc::vi2d pos) : Block(s
 {
     this->toYield = this->warmupTime;
     this->SetSprite("code_block");
-    this->InitLua();
 }
 
 ProgrammableBlock::ProgrammableBlock(SpriteManager* sm, olc::vi2d pos, int inputPorts, int outputPorts) : Block(sm, pos, {1, 1}, inputPorts, outputPorts), running(false)
 {
     this->toYield = this->warmupTime;
     this->SetSprite("code_block");
-    this->InitLua();
 }
 
 ProgrammableBlock::ProgrammableBlock(SpriteManager* sm, olc::vi2d pos, std::vector<std::string> inputPorts, std::vector<std::string> outputPorts) : Block(sm, pos, {1, 1}, inputPorts, outputPorts), running(false)
 {
     this->toYield = this->warmupTime;
     this->SetSprite("code_block");
-    this->InitLua();
 }
 
 ProgrammableBlock::ProgrammableBlock(const ProgrammableBlock& other) : Block(other)
@@ -26,12 +23,12 @@ ProgrammableBlock::ProgrammableBlock(const ProgrammableBlock& other) : Block(oth
     this->toYield = this->warmupTime;
     this->code = other.code;
     this->running = false;
-    this->InitLua();
 }
 
 ProgrammableBlock::~ProgrammableBlock()
 {
-    lua_close(this->L);
+    if (this->L)
+        lua_close(this->L);
 }
 
 bool ProgrammableBlock::IsProgrammable()
@@ -72,7 +69,7 @@ static void luaHook(lua_State *L, lua_Debug *ar)
     ProgrammableBlock* pb = *(ProgrammableBlock**)lua_getextraspace(L);
     if (!pb->UpdateYieldTimer())
     {
-        pb->Stop();
+        pb->SetRunning(false);
         luaL_error(L, "too long without yielding");
     }
 }
@@ -182,6 +179,7 @@ std::string ProgrammableBlock::GetError()
 
 void ProgrammableBlock::Start()
 {
+    this->InitLua();
     if (!this->VerifyCode())
         return;
     this->running = true;
@@ -194,6 +192,12 @@ void ProgrammableBlock::Start()
 void ProgrammableBlock::Stop()
 {
     this->running = false;
+    lua_close(this->L);
+}
+
+void ProgrammableBlock::SetRunning(bool val)
+{
+    this->running = val;
 }
 
 void ProgrammableBlock::PushDataValue(DataValue data)
