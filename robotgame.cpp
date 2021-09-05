@@ -321,7 +321,7 @@ void RobotGame::DrawBlocksUI()
         this->DrawString(posx, this->blocksMenuPos.y + block->size.y * spritesize * scale, std::to_string(count), count > 0 ? olc::WHITE : olc::RED, 3);
         posx += block->size.x * spritesize * scale + uiPadding;
     }
-    int posy = (this->gridSize.y + 3) * blocksize;
+    int posy = (this->gridSize.y + 2) * blocksize + 30;
     this->DrawString({4, posy}, "M: switch mode (building/interactive)    LMB on block in inventory: placement mode    RMB on block on the grid: linking mode");
     this->DrawString({4, posy+13}, "Please check examples folder to learn how to use the programmable block and other blocks, especially see examples/basic.lua.");
 }

@@ -34,9 +34,9 @@ private:
     std::vector<std::shared_ptr<Block>> blocks;
     olc::vi2d gridSize = {16, 9};
     olc::vi2d infoMenuPos;
-    const olc::vi2d infoMenuSize = {200, 800};
+    const olc::vi2d infoMenuSize = {200, 760};
     olc::vi2d blocksMenuPos;
-    const olc::vi2d blocksMenuSize = {800, 4 * blocksize};
+    const olc::vi2d blocksMenuSize = {800, 2 * blocksize + 20};
     const int uiPadding = 8;
 
     Block* selectedBlock = nullptr;
