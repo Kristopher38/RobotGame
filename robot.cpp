@@ -39,6 +39,3 @@ bool Robot::PickUp()
         this->map->SetPos("floor", this->pos, 0);
     }
 }
-
-bool Drop();
-std::vector<std::string> RadarQuery();

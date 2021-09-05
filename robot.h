@@ -17,16 +17,16 @@ class Robot
 private:
     Map* map;
     SpriteManager* sm;
-    olc::vi2d pos;
-    SIDE facing;
+
     std::shared_ptr<Block> inventory;
 
     bool CanMove(olc::vi2d pos);
 public:
-    Robot(Map* map, SpriteManager* sm, olc::vi2d pos, SIDE facing) : map(map), sm(sm), pos(pos), facing(facing) {}
+    olc::vi2d pos;
+
+    Robot(Map* map, SpriteManager* sm, olc::vi2d pos) : map(map), sm(sm), pos(pos) {}
 
     bool Move(SIDE side);
-    bool Turn(SIDE side);
     bool PickUp();
     bool Drop();
     std::vector<std::string> RadarQuery();

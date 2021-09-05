@@ -34,6 +34,7 @@ add_executable(${PROJECT_NAME}
 	"diodeblock.cpp"
 	"motorblock.cpp"
 	"mapblock.cpp"
+	"radarblock.cpp"
 	"pge/imgui.cpp"
 	"pge/imgui_demo.cpp"
 	"pge/imgui_draw.cpp"

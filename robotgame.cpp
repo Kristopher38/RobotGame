@@ -4,7 +4,7 @@
 #include "robotgame.h"
 #include <iostream>
 
-RobotGame::RobotGame() : pge_imgui(true), map(), robot(&map, &sm, {0, 0}, SIDE::UP)
+RobotGame::RobotGame() : pge_imgui(true), map(), robot(&map, &sm, {37, 31})
 {
     this->sAppName = "Robot game";
     this->state = std::make_unique<UIState::EditIdleState>();
@@ -31,10 +31,11 @@ bool RobotGame::OnUserCreate()
 
     this->sm.LoadAll();
 
-    inventory.push_back({2, std::make_shared<ProgrammableBlock>(&sm, olc::vi2d{0, 0}, std::vector<std::string>{"input1", "input2", "input3"}, std::vector<std::string>{"output1", "output2", "output3"})});
+    inventory.push_back({2, std::make_shared<ProgrammableBlock>(&sm, olc::vi2d{0, 0}, std::vector<std::string>{"input1", "input2", "input3", "input4"}, std::vector<std::string>{"output1", "output2", "output3", "output4"})});
     inventory.push_back({5, std::make_shared<ButtonBlock>(&sm, olc::vi2d{0, 0})});
     inventory.push_back({3, std::make_shared<DiodeBlock>(&sm, olc::vi2d{0, 0})});
-    //inventory.push_back({1, std::make_shared<MotorBlock>(&sm, &robot, olc::vi2d{0, 0})});
+    inventory.push_back({1, std::make_shared<MotorBlock>(&sm, &robot, olc::vi2d{0, 0})});
+    inventory.push_back({1, std::make_shared<RadarBlock>(&sm, &map, &robot, olc::vi2d{0, 0})});
     inventory.push_back({1, std::make_shared<MapBlock>(&sm, olc::vi2d{0, 0})});
     return true;
 }
@@ -292,12 +293,15 @@ void RobotGame::RemoveBlock(Block* other)
 
 Block* RobotGame::GetBlockUnderMouseInv()
 {
-    int posx = 0;
+    int posx = 4;
     for (auto block : inventory)
     {
-        if (this->CursorCollide({posx, this->blocksMenuPos.y}, block.second->size * blocksize, this->GetMousePos()))
+        int scale = spritescale;
+        if (block.second->size.x > 2 || block.second->size.y > 2)
+            scale /= 2;
+        if (this->CursorCollide({posx, this->blocksMenuPos.y}, block.second->size * spritesize * scale, this->GetMousePos()))
             return block.second.get();
-        posx += block.second->size.x * blocksize + uiPadding;
+        posx += block.second->size.x * spritesize * scale + uiPadding;
     }
     return nullptr;
 }
@@ -307,7 +311,7 @@ void RobotGame::DrawBlocksUI()
     this->SetDrawTarget(this->blocksUILayer);
     this->blocksMenuPos = {0, this->gridSize.y * blocksize};
 
-    int posx = 0;
+    int posx = 4;
     for (const auto& [count, block] : inventory)
     {
         int scale = spritescale;
@@ -317,6 +321,8 @@ void RobotGame::DrawBlocksUI()
         this->DrawString(posx, this->blocksMenuPos.y + block->size.y * spritesize * scale, std::to_string(count), count > 0 ? olc::WHITE : olc::RED, 3);
         posx += block->size.x * spritesize * scale + uiPadding;
     }
+    int posy = (this->gridSize.y + 3) * blocksize;
+    this->DrawString({4, posy}, "F1: help    M: switch mode (building/controlling)    LMB on block in inventory: placement mode    RMB on block on the grid: linking mode");
 }
 
 void RobotGame::SimStart()

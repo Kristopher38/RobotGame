@@ -15,6 +15,7 @@
 #include "diodeblock.h"
 #include "motorblock.h"
 #include "mapblock.h"
+#include "radarblock.h"
 #include "uistate.h"
 #include "inputstate.h"
 #include "map.h"
@@ -53,14 +54,13 @@ public:
                                            ImGuiWindowFlags_NoScrollWithMouse;
 
     const ImGuiWindowFlags popUpMenuFlags = ImGuiWindowFlags_NoTitleBar |
-                                            ImGuiWindowFlags_NoScrollbar |
                                             ImGuiWindowFlags_NoMove |
                                             ImGuiWindowFlags_NoResize |
                                             ImGuiWindowFlags_NoCollapse |
                                             ImGuiWindowFlags_NoNav |
                                             ImGuiWindowFlags_NoBringToFrontOnFocus;
 
-    const ImGuiWindowFlags infoMenuFlags = popUpMenuFlags | ImGuiWindowFlags_NoBackground;
+    const ImGuiWindowFlags infoMenuFlags = popUpMenuFlags | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoScrollbar;
 
     uint8_t connectionsLayer;
     uint8_t gridLayer;

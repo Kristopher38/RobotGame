@@ -49,7 +49,7 @@ std::unique_ptr<IState> UIState::DraggingState::HandleInput(RobotGame* game)
 
 std::unique_ptr<IState> UIState::IOSelectState::HandleInput(RobotGame* game)
 {
-    ImGui::SetNextWindowSize({180, 200});
+    ImGui::SetNextWindowSize({200, 35 + (this->target->ports.size() * 20) + (this->target->IsProgrammable() ? 35 : 0)});
     ImGui::SetNextWindowPos({this->mousepos.x, this->mousepos.y});
     ImGui::Begin("IO", NULL, game->popUpMenuFlags);
 
@@ -100,8 +100,8 @@ std::unique_ptr<IState> UIState::IOSelectState::HandleInput(RobotGame* game)
 
     if (ImGui::Button("Remove", {80, 30}))
     {
-        game->RemoveBlock(this->target);
         game->IncrInvCount(this->target->schema, 1);
+        game->RemoveBlock(this->target);
         return std::make_unique<UIState::EditIdleState>();
     }
 
@@ -133,7 +133,7 @@ void UIState::LinkingState::Update(RobotGame* game)
 
 std::unique_ptr<IState> UIState::IOSelectSecondState::HandleInput(RobotGame* game)
 {
-    ImGui::SetNextWindowSize({120, 200});
+    ImGui::SetNextWindowSize({120, this->target->ports.size() * 20});
     ImGui::SetNextWindowPos({this->mousepos.x, this->mousepos.y});
     ImGui::Begin("IO", NULL, game->popUpMenuFlags);
 

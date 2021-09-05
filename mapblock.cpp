@@ -9,7 +9,7 @@ MapBlock::MapBlock(SpriteManager* sm, olc::vi2d pos) : Block(sm, pos, {4, 4}, {"
 std::string MapBlock::GetDescription()
 {
     return "Map display block. Can display 14x14 color picture. "
-           "To display something a 100-element table has to be put "
+           "To display something a 196-element table has to be put "
            "on its input port, elements of which should be in range 0-15, "
            "which correspond to different colors. Convenient aliases in the "
            "form of a global table 'color' are provided (e.g. color.red) "

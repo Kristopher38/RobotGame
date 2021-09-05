@@ -53,11 +53,13 @@ ProgrammableBlock* ProgrammableBlock::Clone()
 
 static int luaPrint(lua_State* L)
 {
-    const char* str = luaL_checkstring(L, 1);
-    std::cout<<str<<std::endl;
-    ImGui::Begin("Debug");
-    ImGui::Text("Lua:\n%s", str);
-    ImGui::End();
+    if (lua_type(L, 1) == LUA_TSTRING)
+    {
+        const char* str = luaL_checkstring(L, 1);
+        ImGui::Begin("Console");
+        ImGui::Text(str);
+        ImGui::End();
+    }
     return 0;
 }
 
@@ -67,7 +69,7 @@ static void luaHook(lua_State *L, lua_Debug *ar)
     if (!pb->UpdateYieldTimer())
     {
         pb->SetRunning(false);
-        luaL_error(L, "too long without yielding");
+        luaL_error(L, "Execution time exceeded time limit");
     }
 }
 
@@ -129,7 +131,11 @@ std::string ProgrammableBlock::PopString()
 {
     const char* str = luaL_checkstring(L, -1);
     if (str)
-        return std::string(str);
+    {
+        std::string res(str);
+        lua_pop(L, 1);
+        return res;
+    }
     return std::string();
 }
 
