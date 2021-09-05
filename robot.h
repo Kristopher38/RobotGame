@@ -10,6 +10,8 @@
 #include "spritemanager.h"
 #include "programmableblock.h"
 
+class RobotGame;
+
 enum class SIDE {UP = 0, RIGHT = 1, DOWN = 2, LEFT = 3};
 
 class Robot
@@ -17,14 +19,14 @@ class Robot
 private:
     Map* map;
     SpriteManager* sm;
+    RobotGame* game;
 
-    std::shared_ptr<Block> inventory;
 
     bool CanMove(olc::vi2d pos);
 public:
     olc::vi2d pos;
 
-    Robot(Map* map, SpriteManager* sm, olc::vi2d pos) : map(map), sm(sm), pos(pos) {}
+    Robot(RobotGame* game, Map* map, SpriteManager* sm, olc::vi2d pos) : game(game), map(map), sm(sm), pos(pos) {}
 
     bool Move(SIDE side);
     bool PickUp();

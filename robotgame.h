@@ -32,7 +32,6 @@ private:
     Robot robot;
 
     std::vector<std::shared_ptr<Block>> blocks;
-    std::vector<std::pair<int, std::shared_ptr<Block>>> inventory;
     olc::vi2d gridSize = {16, 9};
     olc::vi2d infoMenuPos;
     const olc::vi2d infoMenuSize = {200, 800};
@@ -42,6 +41,8 @@ private:
 
     Block* selectedBlock = nullptr;
 public:
+
+    std::vector<std::pair<int, std::shared_ptr<Block>>> inventory;
     float timedelta;
     const int tps = 60;
     SpriteManager sm;

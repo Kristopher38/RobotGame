@@ -1,0 +1,45 @@
+-- This is a basic example illustrating port usage.
+-- We will make a simple repeater out of a programmable block
+-- that will forward the button signal to a diode (this is just for
+-- demonstration purposes; button and diode can be directly connected)
+--
+-- First, place a programmable block, diode and button on the grid. Now,
+-- right click the button, select its only port, left click on the programmable
+-- block, and select port named "input1". Then right click the diode, select its
+-- only port and connect it to the programmable block's "output1" port. With that
+-- set up, right click on the programmable block again, click "edit code",
+-- paste the code below into the editor and close it. Now press M to switch
+-- to interactive mode, and try pressing a button. You should see the diode light up.
+--
+-- The way below code works is simple - programmable block has access to a global named
+-- ports, which contains the states of all of its input and output ports. Button provides
+-- a true/false value, and diode receives a true/false value. We assign the button value
+-- available at the programmable's block "input1" port to "output1" port - which is
+-- connected to the diode input, so that the diode's state directly corresponds to the
+-- button's state. We do this in the update() function, which is called every tick,
+-- so that we can see the results immediately.
+--
+-- You can probably notice how there's a delay between the button press and the diode
+-- turning on. This is due to how ports and connections work: when you press a button,
+-- it's value will be available on the programmable block's "input1" port only in the next
+-- tick (on the next update() call, which happens 60 times per second). In that tick, we
+-- assign the value to the "output1" port, which will turn on the diode in the next tick.
+-- So we have a 2-tick delay between the button press and the diode turning on. In most
+-- cases this isn't an issue (the game runs at 60 ticks per second) but it can be an issue
+-- if you're communicating with a radar - its output is updated on the next tick, not on the
+-- same tick that you supplied it with new input
+--
+-- What's available in game's Lua
+-- Some builting Lua libraries aren't available for security reasons. Available libraries are:
+-- - basic library (with the exception of dofile and loadfile functions)
+-- - coroutine library
+-- - string library
+-- - utf8 library
+-- - table library
+-- - math library
+-- Printing doesn't have an output (unless you run the game from the console), you can use error()
+-- to print something inside the game instead
+
+function update()
+	ports.output1 = ports.input1
+end

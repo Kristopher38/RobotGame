@@ -1,4 +1,5 @@
 #include "robot.h"
+#include "robotgame.h"
 
 bool Robot::CanMove(olc::vi2d pos)
 {
@@ -7,36 +8,61 @@ bool Robot::CanMove(olc::vi2d pos)
 
 bool Robot::Move(SIDE side)
 {
+    bool moved = false;
     switch (side)
     {
     case SIDE::UP:
         if (this->CanMove(this->pos + olc::vi2d{0, -1}))
+        {
             this->pos.y--;
-            return true;
+            moved = true;
+        }
+        break;
     case SIDE::DOWN:
         if (this->CanMove(this->pos + olc::vi2d{0, 1}))
+        {
             this->pos.y++;
-            return true;
+            moved = true;
+        }
+        break;
     case SIDE::LEFT:
         if (this->CanMove(this->pos + olc::vi2d{-1, 0}))
+        {
             this->pos.x--;
-            return true;
+            moved = true;
+        }
+        break;
     case SIDE::RIGHT:
         if (this->CanMove(this->pos + olc::vi2d{1, 0}))
+        {
             this->pos.x++;
-            return true;
+            moved = true;
+        }
+        break;
     }
-    return false;
+    if (this->map->GetPos("items", this->pos))
+        this->PickUp();
+    return moved;
 }
 
 bool Robot::PickUp()
 {
-    int tile = this->map->GetPos("floor", this->pos);
+    int item = this->map->GetPos("items", this->pos);
 
-    switch (tile)
+    switch (item)
     {
         case 1:
-        this->inventory = std::make_shared<ProgrammableBlock>(sm, olc::vi2d{0, 0}, std::vector<std::string>{"input_1"}, std::vector<std::string>{"output_1"});
-        this->map->SetPos("floor", this->pos, 0);
+            game->inventory[1].first++;
+            break;
+        case 3:
+            game->inventory[0].first++;
+            break;
+        case 6:
+            game->inventory[2].first++;
+            break;
+        case 10:
+            game->inventory[5].first++;
+            break;
     }
+    this->map->SetPos("items", this->pos, 0);
 }

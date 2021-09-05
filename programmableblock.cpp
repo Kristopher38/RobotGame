@@ -38,7 +38,8 @@ std::string ProgrammableBlock::GetDescription()
     return "Programmable block. Can be programmed in Lua to receive and respond to inputs "
            "from other components (e.g. buttons) and produce outputs which can be sent for "
            "further processing to another programmable blocks or connect to other components "
-           "to control them.";
+           "to control them. Please see examples folder to learn how to use it (especially "
+           "examples/basic.lua, as it contains many essential information).";
 }
 
 std::shared_ptr<olc::Sprite> ProgrammableBlock::GetDefaultSprite()
@@ -51,17 +52,17 @@ ProgrammableBlock* ProgrammableBlock::Clone()
     return new ProgrammableBlock(*this);
 }
 
-static int luaPrint(lua_State* L)
-{
-    if (lua_type(L, 1) == LUA_TSTRING)
-    {
-        const char* str = luaL_checkstring(L, 1);
-        ImGui::Begin("Console");
-        ImGui::Text(str);
-        ImGui::End();
-    }
-    return 0;
-}
+//static int luaPrint(lua_State* L)
+//{
+//    if (lua_type(L, 1) == LUA_TSTRING)
+//    {
+//        const char* str = luaL_checkstring(L, 1);
+//        ImGui::Begin("Console");
+//        ImGui::Text(str);
+//        ImGui::End();
+//    }
+//    return 0;
+//}
 
 static void luaHook(lua_State *L, lua_Debug *ar)
 {
@@ -92,8 +93,8 @@ void ProgrammableBlock::InitLua()
     luaL_requiref(this->L, "math", luaopen_math, true);
 
     // setup custom functions
-    lua_pushcfunction(this->L, luaPrint);
-    lua_setglobal(this->L, "print");
+    //lua_pushcfunction(this->L, luaPrint);
+    //lua_setglobal(this->L, "print");
 
     // setup colors global
     lua_newtable(this->L);

@@ -4,7 +4,7 @@
 #include "robotgame.h"
 #include <iostream>
 
-RobotGame::RobotGame() : pge_imgui(true), map(), robot(&map, &sm, {37, 31})
+RobotGame::RobotGame() : pge_imgui(true), map(), robot(this, &map, &sm, {40, 40})
 {
     this->sAppName = "Robot game";
     this->state = std::make_unique<UIState::EditIdleState>();
@@ -322,7 +322,8 @@ void RobotGame::DrawBlocksUI()
         posx += block->size.x * spritesize * scale + uiPadding;
     }
     int posy = (this->gridSize.y + 3) * blocksize;
-    this->DrawString({4, posy}, "F1: help    M: switch mode (building/controlling)    LMB on block in inventory: placement mode    RMB on block on the grid: linking mode");
+    this->DrawString({4, posy}, "M: switch mode (building/interactive)    LMB on block in inventory: placement mode    RMB on block on the grid: linking mode");
+    this->DrawString({4, posy+13}, "Please check examples folder to learn how to use the programmable block and other blocks, especially see examples/basic.lua.");
 }
 
 void RobotGame::SimStart()
