@@ -18,7 +18,7 @@ endmacro()
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if (UNIX)
-	set(CMAKE_CXX_FLAGS "-lX11 -lGL -lpthread -lpng -lstdc++fs -llua5.3")
+	set(CMAKE_CXX_FLAGS "-static-libstdc++ -static-libgcc -lX11 -lGL -lpthread -lpng -lstdc++fs -llua5.3")
 endif (UNIX)
 
 add_executable(${PROJECT_NAME}

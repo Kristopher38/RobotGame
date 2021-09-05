@@ -15,6 +15,16 @@ std::string RadarBlock::GetDescription()
            "will be available at the data_output output on the NEXT update() call.";
 }
 
+static int clamp(int v, int lo, int hi)
+{
+    if (v < lo)
+        return lo;
+    else if (v > hi)
+        return hi;
+    else
+        return v;
+}
+
 void RadarBlock::Update(float timedelta)
 {
     DataValueEx data = this->ports["position_input"]->GetData();
@@ -30,10 +40,10 @@ void RadarBlock::Update(float timedelta)
                 values[i] = std::get<int64_t>(val);
             i++;
         }
-        int x = std::clamp(values[0], -7ll, 7ll);
-        int y = std::clamp(values[1], -7ll, 7ll);
-        int w = std::clamp(values[2], 1ll, 5ll);
-        int h = std::clamp(values[3], 1ll, 5ll);
+        int x = clamp(values[0], -7, 7);
+        int y = clamp(values[1], -7, 7);
+        int w = clamp(values[2], 1, 5);
+        int h = clamp(values[3], 1, 5);
 
         std::vector<DataValue> output;
 

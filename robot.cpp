@@ -26,6 +26,7 @@ bool Robot::Move(SIDE side)
             this->pos.x++;
             return true;
     }
+    return false;
 }
 
 bool Robot::PickUp()
