@@ -337,7 +337,7 @@ bool ProgrammableBlock::UpdateYieldTimer()
 void ProgrammableBlock::DisplayError()
 {
     ImGui::SetNextWindowSizeConstraints({200, 60}, {300, 150});
-    ImGui::SetNextWindowPos({this->pos.x * 64, this->pos.y * 64});
+    ImGui::SetNextWindowPos({(float)(this->pos.x * 64), (float)(this->pos.y * 64)});
     ImGui::Begin(("Error##" + std::to_string((intptr_t)this)).c_str(), NULL, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_Tooltip);
     ImGui::TextWrapped(this->GetError().c_str());
     ImGui::End();

@@ -1,3 +1,4 @@
+#define PGE_GFX_OPENGL33
 #define OLC_PGEX_DEAR_IMGUI_IMPLEMENTATION
 #define OLC_PGE_APPLICATION
 
@@ -157,8 +158,8 @@ void RobotGame::DrawInfoUI()
         olc::vi2d pos = this->infoMenuPos;
         pos.y += sprite->height * scale;
         olc::vi2d size = this->GetWindowSize() - pos;
-        ImGui::SetNextWindowPos({pos.x, pos.y});
-        ImGui::SetNextWindowSize({size.x, size.y});
+        ImGui::SetNextWindowPos({(float)pos.x, (float)pos.y});
+        ImGui::SetNextWindowSize({(float)size.x, (float)size.y});
         ImGui::Begin("##Info", NULL, this->infoMenuFlags);
         ImGui::TextWrapped(this->selectedBlock->GetDescription().c_str());
         ImGui::End();

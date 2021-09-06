@@ -49,8 +49,8 @@ std::unique_ptr<IState> UIState::DraggingState::HandleInput(RobotGame* game)
 
 std::unique_ptr<IState> UIState::IOSelectState::HandleInput(RobotGame* game)
 {
-    ImGui::SetNextWindowSize({200, 35 + (this->target->ports.size() * 20) + (this->target->IsProgrammable() ? 35 : 0)});
-    ImGui::SetNextWindowPos({this->mousepos.x, this->mousepos.y});
+    ImGui::SetNextWindowSize({(float)200, (float)(35 + (this->target->ports.size() * 20) + (this->target->IsProgrammable() ? 35 : 0))});
+    ImGui::SetNextWindowPos({(float)this->mousepos.x, (float)this->mousepos.y});
     ImGui::Begin("IO", NULL, game->popUpMenuFlags);
 
     if (!ImGui::IsWindowFocused())
@@ -133,8 +133,8 @@ void UIState::LinkingState::Update(RobotGame* game)
 
 std::unique_ptr<IState> UIState::IOSelectSecondState::HandleInput(RobotGame* game)
 {
-    ImGui::SetNextWindowSize({120, this->target->ports.size() * 20});
-    ImGui::SetNextWindowPos({this->mousepos.x, this->mousepos.y});
+    ImGui::SetNextWindowSize({120.0, (float)(this->target->ports.size() * 20)});
+    ImGui::SetNextWindowPos({(float)this->mousepos.x, (float)this->mousepos.y});
     ImGui::Begin("IO", NULL, game->popUpMenuFlags);
 
     if (!ImGui::IsWindowFocused())
