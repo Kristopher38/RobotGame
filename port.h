@@ -23,7 +23,7 @@ public:
     DataValueEx data;
     DataValueEx nextData;
 
-    IPort(Block* owner) : owner(owner), data(0), nextData(0) {}
+    IPort(Block* owner) : owner(owner), data(DataValueEx(0l)), nextData(DataValueEx(0l)) {}
     IPort(const IPort& other)
     {
         this->connections = other.connections;

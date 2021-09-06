@@ -270,13 +270,13 @@ DataValueEx ProgrammableBlock::GetDataValue(int index)
     switch (type)
     {
         case LUA_TBOOLEAN:
-            data = lua_toboolean(this->L, index);
+            data = static_cast<int64_t>(lua_toboolean(this->L, index));
             break;
         case LUA_TNUMBER:
             if (lua_isinteger(this->L, index))
-                data = lua_tointeger(this->L, index);
+                data = static_cast<int64_t>(lua_tointeger(this->L, index));
             else
-                data = lua_tonumber(this->L, index);
+                data = static_cast<double>(lua_tonumber(this->L, index));
             break;
         case LUA_TSTRING:
             data = std::string(lua_tolstring(this->L, index, &len), len);
@@ -293,13 +293,13 @@ DataValueEx ProgrammableBlock::GetDataValue(int index)
                 switch (type)
                 {
                     case LUA_TBOOLEAN:
-                        std::get<std::vector<DataValue>>(data).emplace_back(lua_toboolean(this->L, index));
+                        std::get<std::vector<DataValue>>(data).emplace_back(static_cast<bool>(lua_toboolean(this->L, index)));
                         break;
                     case LUA_TNUMBER:
                         if (lua_isinteger(this->L, index))
-                            std::get<std::vector<DataValue>>(data).emplace_back(lua_tointeger(this->L, index));
+                            std::get<std::vector<DataValue>>(data).emplace_back(static_cast<int64_t>(lua_tointeger(this->L, index)));
                         else
-                            std::get<std::vector<DataValue>>(data).emplace_back(lua_tonumber(this->L, index));
+                            std::get<std::vector<DataValue>>(data).emplace_back(static_cast<double>(lua_tonumber(this->L, index)));
                         break;
                     case LUA_TSTRING:
                         std::get<std::vector<DataValue>>(data).emplace_back(std::string(lua_tolstring(this->L, index, &len), len));
