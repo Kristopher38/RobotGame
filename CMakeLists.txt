@@ -18,10 +18,10 @@ endmacro()
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if (UNIX)
-	if (EMSCRIPTEN)
-		set (CMAKE_CXX_FLAGS "-std=c++17 -O2 -L/home/kris/Downloads/Lua/lua-5.4.3 -llua -s ALLOW_MEMORY_GROWTH=1 -s FULL_ES3=1 -s MAX_WEBGL_VERSION=2 -s MIN_WEBGL_VERSION=2 -s USE_LIBPNG=1 --preload-file ./assets --preload-file ./examples")
-		set (CMAKE_EXECUTABLE_SUFFIX ".html")
-	endif (EMSCRIPTEN)
+	#if (EMSCRIPTEN)
+	#	set (CMAKE_CXX_FLAGS "-std=c++17 -O2 -L/home/kris/Downloads/Lua/lua-5.4.3 -llua -s ALLOW_MEMORY_GROWTH=1 -s FULL_ES3=1 -s MAX_WEBGL_VERSION=2 -s MIN_WEBGL_VERSION=2 -s USE_LIBPNG=1 --preload-file ./assets --preload-file ./examples")
+	#	set (CMAKE_EXECUTABLE_SUFFIX ".html")
+	#endif (EMSCRIPTEN)
 	set(CMAKE_CXX_FLAGS "-llua -lX11 -lGL -lpthread -lpng -lstdc++fs")
 endif (UNIX)
 
@@ -30,7 +30,7 @@ if (WIN32)
 endif (WIN32)
 
 if (UNIX)
-	set(IMGUI_IMPL "pge/imgui_impl_opengl3.cpp")
+	set(IMGUI_IMPL "pge/imgui_impl_opengl2.cpp")
 endif (UNIX)
 
 add_executable(${PROJECT_NAME}
