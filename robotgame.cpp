@@ -1,4 +1,6 @@
-#define PGE_GFX_OPENGL33
+#if defined(unix) || defined(__unix__) || defined(__unix)
+    #define PGE_GFX_OPENGL33
+#endif
 #define OLC_PGEX_DEAR_IMGUI_IMPLEMENTATION
 #define OLC_PGE_APPLICATION
 
@@ -10,6 +12,19 @@ RobotGame::RobotGame() : pge_imgui(true), map(), robot(this, &map, &sm, {40, 40}
     this->sAppName = "Robot game";
     this->state = std::make_unique<UIState::EditIdleState>();
     this->map.Load();
+
+    for (auto const& file : std::filesystem::directory_iterator(this->examplesPath))
+    {
+        std::filesystem::path fpath = file.path();
+        std::string ext = fpath.extension().string();
+        if (ext == std::string(".lua") || ext == std::string(".txt"))
+        {
+            std::ifstream fhandle(fpath.c_str());
+            this->helpFiles[fpath.filename().string()] = std::string((std::istreambuf_iterator<char>(fhandle)),
+                                                           std::istreambuf_iterator<char>());
+            fhandle.close();
+        }
+    }
 }
 
 bool RobotGame::OnUserCreate()
@@ -43,6 +58,8 @@ bool RobotGame::OnUserCreate()
 
 void RobotGame::DrawGrid()
 {
+    this->DrawLine({0, 0}, {this->gridSize.x * blocksize - 1, 0});
+    this->DrawLine({0, 0}, {0, this->gridSize.y * blocksize - 1});
     this->SetDrawTarget(this->gridLayer);
     for (int i = 1; i <= gridSize.x; i++)
     {
@@ -157,9 +174,21 @@ void RobotGame::DrawInfoUI()
 
         olc::vi2d pos = this->infoMenuPos;
         pos.y += sprite->height * scale;
-        olc::vi2d size = this->GetWindowSize() - pos;
-        ImGui::SetNextWindowPos({(float)pos.x, (float)pos.y});
-        ImGui::SetNextWindowSize({(float)size.x, (float)size.y});
+        olc::vi2d size = olc::vi2d{this->ScreenWidth(), this->ScreenHeight()} - pos;
+
+        olc::vi2d canvasSize = {this->ScreenWidth(), this->ScreenHeight()};
+        olc::vi2d windowSize = this->GetWindowSize();
+        float ratio = std::fminf((float)windowSize.x/(float)canvasSize.x, (float)windowSize.y/(float)canvasSize.y);
+        olc::vi2d canvasScaled = {(int32_t)((float)canvasSize.x/(1.0f/ratio)), (int32_t)((float)canvasSize.y/(1.0f/ratio))};
+        olc::vi2d barsSize = (windowSize - canvasScaled) / 2;
+        pos.x = (float)pos.x * ratio + barsSize.x;
+        pos.y = (float)pos.y * ratio + barsSize.y;
+        size.x = (float)size.x * ratio + barsSize.x;
+
+        ImVec2 imguiPos = {(float)pos.x, (float)pos.y};
+        ImVec2 imguiSize = {(float)size.x, (float)size.y};
+        ImGui::SetNextWindowPos(imguiPos);
+        ImGui::SetNextWindowSize(imguiSize);
         ImGui::Begin("##Info", NULL, this->infoMenuFlags);
         ImGui::TextWrapped(this->selectedBlock->GetDescription().c_str());
         ImGui::End();
@@ -289,7 +318,6 @@ void RobotGame::RemoveBlock(Block* other)
             break;
         }
     }
-    //std::remove(this->blocks.begin(), this->blocks.end(), block);
 }
 
 Block* RobotGame::GetBlockUnderMouseInv()
@@ -322,9 +350,52 @@ void RobotGame::DrawBlocksUI()
         this->DrawString(posx, this->blocksMenuPos.y + block->size.y * spritesize * scale, std::to_string(count), count > 0 ? olc::WHITE : olc::RED, 3);
         posx += block->size.x * spritesize * scale + uiPadding;
     }
-    int posy = (this->gridSize.y + 2) * blocksize + 30;
-    this->DrawString({4, posy}, "M: switch mode (building/interactive)    LMB on block in inventory: placement mode    RMB on block on the grid: linking mode");
-    this->DrawString({4, posy+13}, "Please check examples folder to learn how to use the programmable block and other blocks, especially see examples/basic.lua.");
+    int posy = ((this->gridSize.y + 2) * blocksize + 20);
+
+    olc::vi2d canvasSize = {this->ScreenWidth(), this->ScreenHeight()};
+    olc::vi2d windowSize = this->GetWindowSize();
+    float ratio = std::fminf((float)windowSize.x/(float)canvasSize.x, (float)windowSize.y/(float)canvasSize.y);
+    olc::vi2d canvasScaled = {(int32_t)((float)canvasSize.x/(1.0f/ratio)), (int32_t)((float)canvasSize.y/(1.0f/ratio))};
+    olc::vi2d barsSize = (windowSize - canvasScaled) / 2;
+
+    posy = (float)posy * ratio + barsSize.y;
+
+    ImVec2 imguiPos = {0, (float)posy};
+    ImVec2 imguiSize = {(float)windowSize.x, 60.0f + (float)barsSize.y};
+    ImGui::SetNextWindowPos(imguiPos);
+    ImGui::SetNextWindowSize(imguiSize);
+    ImGui::Begin("##Help", NULL, this->infoMenuFlags);
+    ImGui::TextWrapped("H: Help    M: switch mode (building/interactive)    LMB on block in inventory: placement mode    RMB on block on the grid: linking mode\n"
+                       "Please check help menu (press H) to learn how to use the programmable block and other blocks, especially see basic.lua");
+    ImGui::End();
+}
+
+void RobotGame::DrawHelp()
+{
+    static bool visible = false;
+    if (this->GetKey(olc::Key::H).bPressed)
+        visible = !visible;
+
+    if (visible)
+    {
+        if (ImGui::Begin("Help", &visible))
+        {
+            if (ImGui::BeginTabBar("HelpTab"))
+            {
+                for (auto item : this->helpFiles)
+                {
+                    if (ImGui::BeginTabItem(item.first.c_str()))
+                    {
+                        ImVec2 textInputSize = ImGui::GetContentRegionAvail();
+                        ImGui::InputTextMultiline(("##help"+item.first).c_str(), &item.second, textInputSize, ImGuiInputTextFlags_ReadOnly);
+                        ImGui::EndTabItem();
+                    }
+                }
+                ImGui::EndTabBar();
+            }
+        }
+        ImGui::End();
+    }
 }
 
 void RobotGame::SimStart()
@@ -360,6 +431,7 @@ bool RobotGame::OnUserUpdate(float fElapsedTime)
     this->DrawInfoUI();
     this->DrawConnections();
     this->DrawBlocks();
+    this->DrawHelp();
 
     //ImGui::ShowDemoWindow();
     //this->ShowDebugWindow();

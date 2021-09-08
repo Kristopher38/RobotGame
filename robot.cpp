@@ -63,6 +63,9 @@ bool Robot::PickUp()
         case 10:
             game->inventory[5].first++;
             break;
+        default:
+            return false;
     }
     this->map->SetPos("items", this->pos, 0);
+    return true;
 }

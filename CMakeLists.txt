@@ -25,6 +25,14 @@ if (UNIX)
 	set(CMAKE_CXX_FLAGS "-llua -lX11 -lGL -lpthread -lpng -lstdc++fs")
 endif (UNIX)
 
+if (WIN32)
+	set(IMGUI_IMPL "pge/imgui_impl_opengl2.cpp")
+endif (WIN32)
+
+if (UNIX)
+	set(IMGUI_IMPL "pge/imgui_impl_opengl3.cpp")
+endif (UNIX)
+
 add_executable(${PROJECT_NAME}
 	"main.cpp"
 	"robotgame.cpp"
@@ -44,8 +52,8 @@ add_executable(${PROJECT_NAME}
 	"pge/imgui_draw.cpp"
 	"pge/imgui_widgets.cpp"
 	"pge/imgui_tables.cpp"
-	"pge/imgui_impl_opengl3.cpp"
-	"pge/imgui_stdlib.cpp")
+	"pge/imgui_stdlib.cpp"
+	${IMGUI_IMPL})
 
 if (WIN32)
 	set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-static-libstdc++")

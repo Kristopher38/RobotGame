@@ -4373,7 +4373,7 @@ namespace olc
 
 			// Define window furniture
 			DWORD dwExStyle = WS_EX_APPWINDOW | WS_EX_WINDOWEDGE;
-			DWORD dwStyle = WS_CAPTION | WS_SYSMENU | WS_VISIBLE; // | WS_THICKFRAME;
+			DWORD dwStyle = WS_CAPTION | WS_SYSMENU | WS_VISIBLE | WS_THICKFRAME;
 
 			olc::vi2d vTopLeft = vWindowPos;
 
@@ -4616,15 +4616,6 @@ namespace olc
 				XGetWindowAttributes(olc_Display, olc_Window, &gwa);
 				vWindowSize.x = gwa.width;
 				vWindowSize.y = gwa.height;
-			}
-			else
-			{
-				XSizeHints* sh = XAllocSizeHints();
-				sh->flags = PMinSize | PMaxSize;
-				sh->min_width = sh->max_width = vWindowSize.x;
-				sh->min_height = sh->max_height = vWindowSize.y;
-				XSetWMNormalHints(olc_Display, olc_Window, sh);
-				XFree(sh);
 			}
 
 			// Create Keyboard Mapping

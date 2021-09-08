@@ -23,9 +23,9 @@ namespace UIState
     {
     public:
         Block* target;
-        olc::vi2d mousepos;
+        ImVec2 mousepos;
 
-        IOSelectState(Block* target, olc::vi2d mousepos) : target(target), mousepos(mousepos) {}
+        IOSelectState(Block* target, ImVec2 mousepos) : target(target), mousepos(mousepos) {}
         virtual std::unique_ptr<IState> HandleInput(RobotGame* game);
         void OnExit(RobotGame* game);
     };
@@ -60,9 +60,9 @@ namespace UIState
         Block* source;
         IPort* sourcePort;
         Block* target;
-        olc::vi2d mousepos;
+        ImVec2 mousepos;
 
-        IOSelectSecondState(Block* source, IPort* sourcePort, Block* target, olc::vi2d mousepos) : source(source), sourcePort(sourcePort), target(target), mousepos(mousepos) {}
+        IOSelectSecondState(Block* source, IPort* sourcePort, Block* target, ImVec2 mousepos) : source(source), sourcePort(sourcePort), target(target), mousepos(mousepos) {}
 
         virtual std::unique_ptr<IState> HandleInput(RobotGame* game);
     };

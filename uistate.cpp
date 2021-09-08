@@ -15,7 +15,7 @@ std::unique_ptr<IState> UIState::EditIdleState::HandleInput(RobotGame* game)
     }
     else if (rmb.bPressed && block)
     {
-        return std::make_unique<UIState::IOSelectState>(block, pos);
+        return std::make_unique<UIState::IOSelectState>(block, ImGui::GetMousePos());
     }
     else if (lmb.bPressed && invBlock)
     {
@@ -118,7 +118,7 @@ std::unique_ptr<IState> UIState::LinkingState::HandleInput(RobotGame* game)
 {
     Block* block = game->GetBlockUnderMouse();
     if (game->GetMouse(olc::Mouse::LEFT).bPressed && block)
-        return std::make_unique<UIState::IOSelectSecondState>(this->target, this->port, block, game->GetMousePos());
+        return std::make_unique<UIState::IOSelectSecondState>(this->target, this->port, block, ImGui::GetMousePos());
     else if (game->GetMouse(olc::Mouse::RIGHT).bPressed)
         return std::make_unique<UIState::EditIdleState>();
 

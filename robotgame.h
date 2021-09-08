@@ -34,7 +34,7 @@ private:
     std::vector<std::shared_ptr<Block>> blocks;
     olc::vi2d gridSize = {16, 9};
     olc::vi2d infoMenuPos;
-    const olc::vi2d infoMenuSize = {200, 760};
+    const olc::vi2d infoMenuSize = {200, 776};
     olc::vi2d blocksMenuPos;
     const olc::vi2d blocksMenuSize = {800, 2 * blocksize + 20};
     const int uiPadding = 8;
@@ -49,6 +49,8 @@ public:
     const int spritesize = 16;                          // one grid unit image size
     const int spritescale = 4;                          // sprite scaling ratio
     const int blocksize = spritesize * spritescale;     // one grid unit rendered size
+    std::map<std::string, std::string> helpFiles;
+    const std::filesystem::path examplesPath = {"./examples"};
 
     const ImGuiWindowFlags codeEditFlags = ImGuiWindowFlags_NoCollapse |
                                            ImGuiWindowFlags_NoNav |
@@ -76,6 +78,7 @@ public:
     bool OnUserUpdate(float fElapsedTime) override;
     void SimTick();
 
+    void DrawHelp();
     void DrawGrid();
     olc::vi2d GetResolution();
     Block* GetBlockAt(olc::vi2d pos);
