@@ -1,4 +1,4 @@
-#if defined(unix) || defined(__unix__) || defined(__unix)
+#if defined(dupa) && defined(unix) || defined(__unix__) || defined(__unix)
     #define PGE_GFX_OPENGL33
 #endif
 #define OLC_PGEX_DEAR_IMGUI_IMPLEMENTATION
@@ -378,6 +378,7 @@ void RobotGame::DrawHelp()
 
     if (visible)
     {
+	ImGui::SetNextWindowSizeConstraints(ImVec2(400, 300), ImVec2(FLT_MAX, FLT_MAX));
         if (ImGui::Begin("Help", &visible))
         {
             if (ImGui::BeginTabBar("HelpTab"))
