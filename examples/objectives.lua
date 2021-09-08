@@ -1,0 +1,16 @@
+-- This game is about building your own control panel and programming its components
+-- in Lua. It's mostly a sandbox (because I didn't have time during the jam to add
+-- proper levels). However, there is an objective you can pursue - collecting all the
+-- components scattered across the map (yes, there is a map, but you have to display it
+-- yourself). To do this, you need to hack and code your solutions to the problems of
+-- displaying the environment on a screen and driving the robot around (example code is
+-- provided in mapradar.lua). Start off by reading basic.lua, and then other examples.
+-- By that point you should have some knowledge to craft your own scripts. Some details
+-- about how Lua works specifically in this game are provided in details.lua
+--
+-- Some other objectives that you can pursue that come to mind are:
+-- - Improve the mapradar.lua example to fill out whole available screen space with map data
+-- - Improve movement by going to the nearest maze intersection when you press a button
+-- - Write some fancy graphical demo or a game (e.g. tetris) for the screen (or multiple
+--   screens if you can find them)
+-- - Fully automate beating the game

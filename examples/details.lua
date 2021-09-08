@@ -1,0 +1,20 @@
+-- You can probably notice in the blink.lua example how there's a delay between the button press
+-- and the diode turning on. This is due to how ports and connections work: when you press a button,
+-- it's value will be available on the programmable block's "input1" port only in the next
+-- tick (on the next update() call, which happens 60 times per second). In that tick, we
+-- assign the value to the "output1" port, which will turn on the diode in the next tick.
+-- So we have a 2-tick delay between the button press and the diode turning on. In most
+-- cases this isn't an issue (the game runs at 60 ticks per second) but it can be an issue
+-- if you're communicating with a radar - its output is updated on the next tick, not on the
+-- same tick that you supplied it with new input
+--
+-- What's available in game's Lua
+-- Some builting Lua libraries aren't available for security reasons. Available libraries are:
+-- - basic library (with the exception of dofile and loadfile functions)
+-- - coroutine library
+-- - string library
+-- - utf8 library
+-- - table library
+-- - math library
+-- Printing doesn't have an output (unless you run the game from the console), you can use error()
+-- to print something inside the game instead

@@ -17,10 +17,13 @@ std::unique_ptr<IState> UIState::EditIdleState::HandleInput(RobotGame* game)
     {
         return std::make_unique<UIState::IOSelectState>(block, ImGui::GetMousePos());
     }
-    else if (lmb.bPressed && invBlock)
+    else if (invBlock)
     {
-        if (game->InvCount(invBlock) > 0)
+        game->SelectBlock(invBlock);
+        if (lmb.bPressed && game->InvCount(invBlock) > 0)
+        {
             return std::make_unique<UIState::BlockPlaceState>(std::shared_ptr<Block>(invBlock->Clone()));
+        }
     }
     else if (game->GetKey(olc::Key::M).bPressed)
     {
@@ -204,6 +207,12 @@ std::unique_ptr<IState> UIState::BlockPlaceState::HandleInput(RobotGame* game)
             game->IncrInvCount(this->target->schema, -1);
             return std::make_unique<UIState::EditIdleState>();
         }
+    }
+    else if (game->GetMouse(olc::Mouse::LEFT).bPressed)
+    {
+        Block* b = game->GetBlockUnderMouseInv();
+        if (b)
+            this->target = std::shared_ptr<Block>(b->Clone());
     }
     return nullptr;
 }

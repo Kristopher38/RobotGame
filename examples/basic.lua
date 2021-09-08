@@ -1,4 +1,9 @@
--- This is a basic example illustrating port usage.
+-- This game is about building your own control panel and programming its components
+-- in Lua. If you want to read about game objectives, read objectives.lua. If you want to
+-- know how to get started with programming in-game, read on.
+--
+-- This is a basic example to get you started, illustrating how the UI
+-- works and how to interact with other blocks with the programmable block.
 -- We will make a simple repeater out of a programmable block
 -- that will forward the button signal to a diode (this is just for
 -- demonstration purposes; button and diode can be directly connected)
@@ -19,26 +24,8 @@
 -- button's state. We do this in the update() function, which is called every tick,
 -- so that we can see the results immediately.
 --
--- You can probably notice how there's a delay between the button press and the diode
--- turning on. This is due to how ports and connections work: when you press a button,
--- it's value will be available on the programmable block's "input1" port only in the next
--- tick (on the next update() call, which happens 60 times per second). In that tick, we
--- assign the value to the "output1" port, which will turn on the diode in the next tick.
--- So we have a 2-tick delay between the button press and the diode turning on. In most
--- cases this isn't an issue (the game runs at 60 ticks per second) but it can be an issue
--- if you're communicating with a radar - its output is updated on the next tick, not on the
--- same tick that you supplied it with new input
---
--- What's available in game's Lua
--- Some builting Lua libraries aren't available for security reasons. Available libraries are:
--- - basic library (with the exception of dofile and loadfile functions)
--- - coroutine library
--- - string library
--- - utf8 library
--- - table library
--- - math library
--- Printing doesn't have an output (unless you run the game from the console), you can use error()
--- to print something inside the game instead
+-- More details about how ports work and what's available in in-game Lua are provided in
+-- details.lua file
 
 function update()
 	ports.output1 = ports.input1
